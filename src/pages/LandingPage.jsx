@@ -6,11 +6,11 @@ import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
 
 const IMG = {
-  hero: 'https://id-preview--128202b8-2850-433a-95ef-e811f8d27ccf.lovable.app/assets/hero-bg-BlJrUUfg.jpg',
-  howItWorks: 'https://id-preview--128202b8-2850-433a-95ef-e811f8d27ccf.lovable.app/assets/howit-works-bg-DizdyTFJ.jpg',
-  benefits: 'https://id-preview--128202b8-2850-433a-95ef-e811f8d27ccf.lovable.app/assets/benefits-bg-D0-q3ZUF.jpg',
-  testimonials: 'https://id-preview--128202b8-2850-433a-95ef-e811f8d27ccf.lovable.app/assets/testimonials-bg-WbhnzhBy.jpg',
-  cta: 'https://id-preview--128202b8-2850-433a-95ef-e811f8d27ccf.lovable.app/assets/cta-bg-g6rzspAj.jpg',
+  hero: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80',
+  howItWorks: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80',
+  benefits: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1920&q=80',
+  testimonials: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1920&q=80',
+  cta: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1920&q=80',
 }
 
 const bgSection = (url, overlay = 'rgba(15,15,20,0.75)') => ({
