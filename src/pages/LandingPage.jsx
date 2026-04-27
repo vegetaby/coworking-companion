@@ -6,7 +6,7 @@ import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
 
 const IMG = {
-  hero: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80',
+  hero: 'https://images.unsplash.com/photo-1600508774634-4e11e5e70f04?w=1920&q=80',
   howItWorks: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80',
   benefits: 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1920&q=80',
   testimonials: 'https://images.unsplash.com/photo-1553877522-43269d4ea984?w=1920&q=80',
@@ -46,7 +46,7 @@ export default function LandingPage() {
             <br /><span style={{ background: T.gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Gemeinsam fokussiert arbeiten.</span>
           </h1>
           <p style={{ fontSize: 18, color: 'rgba(228,228,237,0.8)', marginBottom: 40, maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            Tritt der kostenlosen Skool CoWorking Community bei und arbeite in fokussierten Live-Sessions gemeinsam mit anderen – per Zoom, ohne Smalltalk.
+            Tritt der kostenlosen Skool CoWorking Community bei und arbeite in fokussierten Live-Sessions gemeinsam mit anderen â per Zoom, ohne Smalltalk.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '14px 32px', fontSize: 16 }}>Kostenlos beitreten</a>
@@ -81,7 +81,7 @@ export default function LandingPage() {
               { icon: "target", title: "Taegliche Fokus Sessions", desc: "Strukturiertes Deep Work in 1h- und 2h-Slots mit Check-in und Austausch." },
               { icon: "pieChart", title: "Persoenliches Dashboard", desc: "Streaks, Produktivitaets-Insights und deine Fokus-Statistiken auf einen Blick." },
               { icon: "clipboard", title: "Fokus-Routinen", desc: "Individuelle Pre-Session-Checkliste fuer maximale Produktivitaet." },
-              { icon: "trophy", title: "Community-Leaderboard", desc: "Freundlicher Wettbewerb – wer schafft die meisten Sessions?" },
+              { icon: "trophy", title: "Community-Leaderboard", desc: "Freundlicher Wettbewerb â wer schafft die meisten Sessions?" },
             ].map((f, i) => (
               <div key={i} style={{ background: 'rgba(26,26,36,0.7)', backdropFilter: 'blur(8px)', borderRadius: 16, padding: 28, border: `1px solid ${T.border}` }}>
                 <div style={{ width: 48, height: 48, borderRadius: 12, background: T.accentGlow, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.accentLight, marginBottom: 16 }}>
@@ -115,7 +115,7 @@ export default function LandingPage() {
                   <Icon name="calendar" size={15} /> {formatDate(session.date)}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.textMuted, fontSize: 14, marginTop: 4 }}>
-                  <Icon name="clock" size={15} /> {session.startTime} – {session.endTime} Uhr
+                  <Icon name="clock" size={15} /> {session.startTime} â {session.endTime} Uhr
                 </div>
               </div>
             ))}
@@ -130,7 +130,7 @@ export default function LandingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
             {[
               { step: "1", title: "Community beitreten", desc: "Kostenlos auf Skool registrieren und dem CoWorking Space beitreten." },
-              { step: "2", title: "Sessions waehlen", desc: "Melde dich fuer passende Fokus-Slots an – taeglich mehrere zur Auswahl." },
+              { step: "2", title: "Sessions waehlen", desc: "Melde dich fuer passende Fokus-Slots an â taeglich mehrere zur Auswahl." },
               { step: "3", title: "Fokus. Wachsen.", desc: "Check-in, Deep Work mit Gleichgesinnten, Check-out. Fertig." },
             ].map((item, i) => (
               <div key={i} style={{ background: 'rgba(26,26,36,0.6)', backdropFilter: 'blur(8px)', borderRadius: 16, textAlign: 'center', padding: 36, border: `1px solid ${T.border}` }}>
@@ -185,7 +185,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{ background: T.sidebar, padding: '32px 24px', textAlign: 'center', borderTop: `1px solid ${T.border}` }}>
-        <p style={{ color: T.textMuted, fontSize: 13 }}>© 2026 The CoWorking Space. Alle Rechte vorbehalten.</p>
+        <p style={{ color: T.textMuted, fontSize: 13 }}>Â© 2026 The CoWorking Space. Alle Rechte vorbehalten.</p>
       </footer>
     </div>
   )
