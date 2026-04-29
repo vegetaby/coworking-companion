@@ -31,7 +31,10 @@ export default function LandingPage() {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: T.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 14 }}>CW</div>
           <span style={{ fontWeight: 700, fontSize: 16 }}>The CoWorking Space</span>
         </div>
-        <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none" }}>Kostenlos beitreten</a>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <button style={{ ...S.btn("outline"), fontSize: 14 }} onClick={signInWithGoogle}>Anmelden</button>
+          <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none" }}>Kostenlos beitreten</a>
+        </div>
       </header>
 
       {/* Hero with full background image */}
@@ -47,6 +50,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '14px 32px', fontSize: 16 }}>Kostenlos beitreten</a>
+            <button style={{ ...S.btn("outline"), padding: '14px 32px', fontSize: 16 }} onClick={signInWithGoogle}>Anmelden</button>
           </div>
         </div>
       </div>
