@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider, useApp } from './context/AppContext'
+import { ThemeProvider } from './context/ThemeContext'
 import Sidebar from './components/layout/Sidebar'
 import TopNav from './components/layout/TopNav'
 import LandingPage from './pages/LandingPage'
@@ -17,6 +19,8 @@ import GoalModal from './modals/GoalModal'
 import RoutineModal from './modals/RoutineModal'
 import CalExportModal from './modals/CalExportModal'
 import OnboardingModal from './modals/OnboardingModal'
+
+const SIDEBAR_KEY = 'cw-sidebar-collapsed'
 
 function Modals() {
   const { showCheckIn, showCheckOut, showGoalModal, showRoutineModal, showCalExport, showOnboarding } = useApp()
@@ -35,6 +39,12 @@ function Modals() {
 function AppLayout() {
   const { user, loading } = useAuth()
   const location = useLocation()
+  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === '1')
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
+  }, [collapsed])
 
   if (loading) {
     return (
@@ -54,9 +64,14 @@ function AppLayout() {
 
   return (
     <div className="min-h-screen bg-bg flex">
-      <Sidebar />
-      <div className="flex-1 ml-0 md:ml-64">
-        <TopNav />
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(v => !v)}
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
+      <div className={`flex-1 ml-0 transition-[margin] duration-200 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+        <TopNav onMenuClick={() => setMobileOpen(true)} />
         <main className="p-6 max-w-5xl mx-auto">
           <Routes>
             <Route path="/" element={<DashboardPage />} />
@@ -76,12 +91,14 @@ function AppLayout() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <Routes>
-          <Route path="/*" element={<AppLayout />} />
-        </Routes>
-      </AppProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <AppProvider>
+          <Routes>
+            <Route path="/*" element={<AppLayout />} />
+          </Routes>
+        </AppProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

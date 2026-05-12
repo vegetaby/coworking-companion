@@ -4,15 +4,15 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: '#0f0f14',
-        card: '#1a1a24',
+        bg: 'rgb(var(--c-bg) / <alpha-value>)',
+        card: 'rgb(var(--c-card) / <alpha-value>)',
+        sidebar: 'rgb(var(--c-sidebar) / <alpha-value>)',
+        'text-main': 'rgb(var(--c-text) / <alpha-value>)',
+        'text-muted': 'rgb(var(--c-text-muted) / <alpha-value>)',
+        'border-main': 'rgb(var(--c-border) / <alpha-value>)',
         accent: '#7c3aed',
         'accent-light': '#a78bfa',
         'accent-glow': 'rgba(124,58,237,0.15)',
-        'text-main': '#e4e4ed',
-        'text-muted': '#8888a4',
-        'border-main': '#2a2a3d',
-        sidebar: '#13131b',
         'sidebar-active': 'rgba(124,58,237,0.09)',
         success: '#10b981',
         warning: '#f59e0b',

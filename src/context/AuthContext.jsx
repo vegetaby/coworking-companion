@@ -44,7 +44,32 @@ export function AuthProvider({ children }) {
       provider: 'google',
       options: { redirectTo: window.location.origin }
     })
-    if (error) console.error('Login error:', error)
+    if (error) return { error }
+    return { error: null }
+  }
+
+  const signInWithEmail = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    return { data, error }
+  }
+
+  const signUpWithEmail = async (email, password, displayName) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: displayName ? { display_name: displayName } : undefined,
+      },
+    })
+    return { data, error }
+  }
+
+  const resetPassword = async (email) => {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    return { data, error }
   }
 
   const signOut = async () => {
@@ -60,6 +85,9 @@ export function AuthProvider({ children }) {
     isAdmin: profile?.role === 'admin',
     isHost: profile?.role === 'host' || profile?.role === 'admin',
     signInWithGoogle,
+    signInWithEmail,
+    signUpWithEmail,
+    resetPassword,
     signOut,
   }
 

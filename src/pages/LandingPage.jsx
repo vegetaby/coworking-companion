@@ -1,9 +1,10 @@
-import { useAuth } from '../context/AuthContext'
+import { useState } from 'react'
 import { T, S } from '../lib/theme'
 import { formatDate } from '../lib/utils'
 import { MOCK_SESSIONS } from '../data/mockData'
 import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
+import AuthModal from '../modals/AuthModal'
 
 const IMG = {
   hero: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80',
@@ -21,10 +22,14 @@ const bgSection = (url, overlay = 'rgba(15,15,20,0.6)') => ({
 })
 
 export default function LandingPage() {
-  const { signInWithGoogle } = useAuth()
+  const [authMode, setAuthMode] = useState(null) // null | 'login' | 'signup'
+  const openLogin = () => setAuthMode('login')
+  const openSignup = () => setAuthMode('signup')
+  const closeAuth = () => setAuthMode(null)
 
   return (
-    <div>
+    <div data-theme="dark" style={{ background: 'rgb(var(--c-bg))', color: 'rgb(var(--c-text))' }}>
+      {authMode && <AuthModal initialMode={authMode} onClose={closeAuth} />}
       {/* Top Nav */}
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "16px 32px", position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(15,15,20,0.85)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${T.border}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -32,7 +37,7 @@ export default function LandingPage() {
           <span style={{ fontWeight: 700, fontSize: 16 }}>The CoWorking Space</span>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button style={{ ...S.btn("outline"), fontSize: 14 }} onClick={signInWithGoogle}>Anmelden</button>
+          <button style={{ ...S.btn("outline"), fontSize: 14 }} onClick={openLogin}>Anmelden</button>
           <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none" }}>Kostenlos beitreten</a>
         </div>
       </header>
@@ -50,7 +55,7 @@ export default function LandingPage() {
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '14px 32px', fontSize: 16 }}>Kostenlos beitreten</a>
-            <button style={{ ...S.btn("outline"), padding: '14px 32px', fontSize: 16 }} onClick={signInWithGoogle}>Anmelden</button>
+            <button style={{ ...S.btn("outline"), padding: '14px 32px', fontSize: 16 }} onClick={openLogin}>Anmelden</button>
           </div>
         </div>
       </div>
@@ -101,7 +106,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Nächste Fokus Sessions</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {MOCK_SESSIONS.filter(s => s.status !== "past").slice(0, 4).map(session => (
-              <div key={session.id} style={{ ...S.card, cursor: "pointer", transition: 'transform 0.2s' }} onClick={signInWithGoogle}>
+              <div key={session.id} style={{ ...S.card, cursor: "pointer", transition: 'transform 0.2s' }} onClick={openLogin}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                   <span style={S.badge(session.host === "Britta" ? "#8b5cf6" : "#3b82f6")}>{session.host}</span>
                   {session.status === "live" && (

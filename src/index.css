@@ -8,18 +8,40 @@
   box-sizing: border-box;
 }
 
+:root,
+[data-theme="dark"] {
+  --c-bg: 15 15 20;
+  --c-card: 26 26 36;
+  --c-sidebar: 19 19 27;
+  --c-text: 228 228 237;
+  --c-text-muted: 136 136 164;
+  --c-border: 42 42 61;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --c-bg: 246 247 250;
+  --c-card: 255 255 255;
+  --c-sidebar: 255 255 255;
+  --c-text: 24 24 36;
+  --c-text-muted: 96 96 116;
+  --c-border: 222 224 234;
+  color-scheme: light;
+}
+
 body {
-  background: #0f0f14;
-  color: #e4e4ed;
+  background: rgb(var(--c-bg));
+  color: rgb(var(--c-text));
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #0f0f14; }
-::-webkit-scrollbar-thumb { background: #2a2a3d; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a5d; }
+::-webkit-scrollbar-track { background: rgb(var(--c-bg)); }
+::-webkit-scrollbar-thumb { background: rgb(var(--c-border)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-text-muted) / 0.6); }
 
 /* Gradient text */
 .gradient-text {
