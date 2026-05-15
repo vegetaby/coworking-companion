@@ -1,9 +1,136 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useApp } from '../context/AppContext'
 import { T, S } from '../lib/theme'
 import { formatDate } from '../lib/utils'
 import { MOCK_ADMIN_STATS } from '../data/mockData'
 import Icon from '../components/ui/Icon'
+
+// Sektion "Feature-Sichtbarkeit": Admin schaltet ueber Toggles, welche
+// Sidebar-Eintraege fuer alle eingeloggten User sichtbar sind. Wert wird in
+// public.feature_flags persistiert; SELECT ist fuer Authenticated erlaubt,
+// UPDATE/INSERT nur fuer Admins (RLS in Migration 004).
+function FeatureFlagsSection() {
+  const { featureFlagRows, featureFlags, setFeatureFlag, refreshFeatureFlags } = useApp()
+  const [savedKey, setSavedKey] = useState(null)
+  const [errorKey, setErrorKey] = useState(null)
+  const [busyKey, setBusyKey] = useState(null)
+
+  // Beim ersten Mount nochmal nachladen, damit der Admin frische Werte sieht
+  // (z.B. nach Reload oder wenn ein anderer Admin grade gespeichert hat).
+  useEffect(() => {
+    refreshFeatureFlags()
+  }, [refreshFeatureFlags])
+
+  const handleToggle = async (key) => {
+    setErrorKey(null)
+    setBusyKey(key)
+    try {
+      await setFeatureFlag(key, !featureFlags[key])
+      setSavedKey(key)
+      setTimeout(() => {
+        setSavedKey(curr => (curr === key ? null : curr))
+      }, 1800)
+    } catch (err) {
+      console.error('Toggle fehlgeschlagen:', err)
+      setErrorKey(key)
+    } finally {
+      setBusyKey(null)
+    }
+  }
+
+  const rows = featureFlagRows.length > 0
+    ? featureFlagRows
+    : Object.keys(featureFlags).map(k => ({ key: k, enabled: featureFlags[k], label: k, description: null }))
+
+  return (
+    <div style={{ ...S.card, marginBottom: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: `${T.accent}20`, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: T.accent,
+        }}>
+          <Icon name="settings" size={20} />
+        </div>
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Feature-Sichtbarkeit</h3>
+          <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>
+            Steuere, welche Sidebar-Eintraege fuer alle Mitglieder sichtbar sind.
+          </p>
+        </div>
+      </div>
+      <p style={{ fontSize: 12, color: T.textMuted, marginBottom: 16 }}>
+        Aenderungen wirken nach Reload der Seite fuer alle User.
+      </p>
+
+      {rows.length === 0 ? (
+        <p style={{ color: T.textMuted, fontSize: 13 }}>
+          Keine Feature-Flags gefunden. Wurde Migration 004 angewendet?
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {rows.map(row => {
+            const enabled = !!featureFlags[row.key]
+            const isSaved = savedKey === row.key
+            const isError = errorKey === row.key
+            const isBusy = busyKey === row.key
+            return (
+              <label
+                key={row.key}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  gap: 12, padding: '12px 14px', borderRadius: 10,
+                  border: `1px solid ${T.border}`, background: T.bg,
+                  cursor: isBusy ? 'wait' : 'pointer',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    disabled={isBusy}
+                    onChange={() => handleToggle(row.key)}
+                    style={{ width: 18, height: 18, accentColor: T.accent, flexShrink: 0 }}
+                    aria-label={`${row.label} ${enabled ? 'deaktivieren' : 'aktivieren'}`}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{row.label}</div>
+                    {row.description && (
+                      <div style={{ fontSize: 12, color: T.textMuted, marginTop: 2 }}>{row.description}</div>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  {isError && (
+                    <span style={{ fontSize: 12, color: T.danger, fontWeight: 600 }}>
+                      Fehler
+                    </span>
+                  )}
+                  {isSaved && !isError && (
+                    <span style={{
+                      fontSize: 12, color: T.success, fontWeight: 600,
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                    }}>
+                      <Icon name="check" size={14} /> Gespeichert
+                    </span>
+                  )}
+                  <span style={{
+                    fontSize: 11, color: enabled ? T.success : T.textMuted,
+                    fontWeight: 600, padding: '3px 8px', borderRadius: 999,
+                    background: enabled ? `${T.success}15` : `${T.textMuted}15`,
+                  }}>
+                    {enabled ? 'AN' : 'AUS'}
+                  </span>
+                </div>
+              </label>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AdminPage() {
   const { isAdmin } = useAuth()
@@ -60,6 +187,9 @@ export default function AdminPage() {
         <h1 style={{ ...S.h2, marginBottom: 4 }}>Host-Insights</h1>
         <p style={{ color: T.textMuted }}>Detaillierte Einblicke fuer Session-Hosts</p>
       </div>
+
+      {/* Feature-Sichtbarkeit (Sidebar-Steuerung) */}
+      <FeatureFlagsSection />
 
       {/* Overview Stats */}
       <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>

@@ -18,11 +18,24 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchProfile(session.user.id)
-      setLoading(false)
-    })
+    // Safety-Net: wenn getSession aus irgendwelchen Gruenden haengt
+    // (kaputter JWT im localStorage, Netzwerk-Hick-Up), nach 6 Sek
+    // den Ladestatus trotzdem aufgeben. Sonst friert die App ein.
+    const safetyTimeout = setTimeout(() => setLoading(false), 6000)
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user ?? null)
+        if (session?.user) fetchProfile(session.user.id)
+        setLoading(false)
+        clearTimeout(safetyTimeout)
+      })
+      .catch((err) => {
+        console.error('Auth init failed:', err)
+        setLoading(false)
+        clearTimeout(safetyTimeout)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
@@ -36,8 +49,29 @@ export function AuthProvider({ children }) {
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      clearTimeout(safetyTimeout)
+      subscription.unsubscribe()
+    }
   }, [])
+
+  // Hilfs-Funktion fuer "App haengt" - Reset aller lokalen Auth-Daten
+  // (alte JWTs, gecachte Sessions) und Page-Reload. Wird vom Loading-Screen
+  // angeboten falls er zu lange haengt.
+  const resetLocalSession = async () => {
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch {
+      // ignore - reset anyway
+    }
+    try {
+      window.localStorage.clear()
+      window.sessionStorage.clear()
+    } catch {
+      // ignore
+    }
+    window.location.replace('/')
+  }
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -89,6 +123,7 @@ export function AuthProvider({ children }) {
     signUpWithEmail,
     resetPassword,
     signOut,
+    resetLocalSession,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

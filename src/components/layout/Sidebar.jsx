@@ -1,22 +1,33 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useApp } from '../../context/AppContext'
 import { useTheme } from '../../context/ThemeContext'
 import Icon from '../ui/Icon'
 
-const navItems = [
+// Fixe Navigation, fuer alle eingeloggten User sichtbar.
+const FIXED_NAV_ITEMS = [
   { path: '/', label: 'Dashboard', emoji: '🏠' },
   { path: '/kalender', label: 'Kalender', emoji: '📅' },
-  { path: '/leaderboard', label: 'Leaderboard', emoji: '🏆' },
   { path: '/sessions', label: 'Meine Sessions', emoji: '📋' },
-  { path: '/routinen', label: 'Fokus-Routinen', emoji: '✅' },
-  { path: '/analyse', label: 'Analyse', emoji: '📊' },
+]
+
+// Flag-gesteuerte Items. Nur sichtbar wenn das Flag aktiv ist; Admin kann
+// das ueber die Admin-UI toggeln.
+const FLAGGED_NAV_ITEMS = [
+  { path: '/routinen',    label: 'Fokus-Routinen', emoji: '✅', flag: 'nav_routinen' },
+  { path: '/leaderboard', label: 'Leaderboard',    emoji: '🏆', flag: 'nav_leaderboard' },
+  { path: '/analyse',     label: 'Analyse',        emoji: '📊', flag: 'nav_analyse' },
 ]
 
 export default function Sidebar({ collapsed = false, onToggleCollapse, mobileOpen = false, onCloseMobile }) {
   const location = useLocation()
   const navigate = useNavigate()
   const { isAdmin, signOut, profile } = useAuth()
+  const { featureFlags } = useApp()
   const { theme, toggleTheme } = useTheme()
+
+  const visibleFlaggedItems = FLAGGED_NAV_ITEMS.filter(item => featureFlags?.[item.flag])
+  const navItems = [...FIXED_NAV_ITEMS, ...visibleFlaggedItems]
 
   const navigateAndClose = (path) => {
     navigate(path)
