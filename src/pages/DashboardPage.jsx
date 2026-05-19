@@ -95,16 +95,23 @@ export default function DashboardPage() {
         </div>
       ) : nextSignedUp ? (
         <div style={{
-          ...S.card, padding: 20, marginBottom: 24,
-          background: `linear-gradient(135deg, ${T.accentGlow}, rgba(79,70,229,0.04))`,
-          border: `1px solid ${T.accent}30`,
-          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12,
+          ...S.card, padding: 24, marginBottom: 28,
+          background: `linear-gradient(135deg, rgba(124,58,237,0.22), rgba(79,70,229,0.08))`,
+          border: `2px solid ${T.accent}`,
+          boxShadow: `0 8px 32px rgba(124,58,237,0.25), 0 0 0 1px ${T.accent}40`,
+          display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: T.accentGlow, display: "flex", alignItems: "center", justifyContent: "center", color: T.accentLight }}><Icon name="calendar" size={20} /></div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div style={{
+              width: 52, height: 52, borderRadius: 14,
+              background: `linear-gradient(135deg, ${T.accent}, ${T.accentLight})`,
+              display: "flex", alignItems: "center", justifyContent: "center", color: "#fff",
+              boxShadow: `0 4px 16px ${T.accent}80`,
+            }}><Icon name="calendar" size={26} /></div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Nächste Session: {nextSignedUp.title}</div>
-              <div style={{ fontSize: 13, color: T.textMuted }}>{formatDate(nextSignedUp.date)} · {trimTime(nextSignedUp.start_time)} – {trimTime(nextSignedUp.end_time)} mit {nextSignedUp.host_name}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: T.accentLight, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Deine nächste Session</div>
+              <div style={{ fontWeight: 800, fontSize: 19, marginBottom: 2 }}>{nextSignedUp.title}</div>
+              <div style={{ fontSize: 14, color: T.text, opacity: 0.85 }}>{formatDate(nextSignedUp.date)} · {trimTime(nextSignedUp.start_time)} – {trimTime(nextSignedUp.end_time)} mit {nextSignedUp.host_name}</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>

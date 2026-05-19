@@ -17,21 +17,32 @@ export const getGoogleCalLink = (session) => {
 };
 
 // ============================================
-// Bug-Fix 6: Session-Status dynamisch
+// Session-Status dynamisch
 // ============================================
-// Vorher: status (past/live/scheduled) war im Mock hardcoded und wurde
-// im UI direkt benutzt. Folge: Sessions zeigten "LIVE" obwohl ihr Datum
-// Monate zurueck lag. Jetzt: dynamisch aus date + start + end + now ableiten.
+// Bug-Fix Push 5: Supabase liefert Zeiten als "HH:MM:SS" (Postgres TIME),
+// Mock-Daten als "HH:MM". Push 4 haengte blind ":00" an, was bei "14:00:00"
+// zu "14:00:00:00" wurde -> Invalid Date -> alle Sessions wurden faelschlich
+// als "scheduled" klassifiziert -> Past-Filter wirkte nicht.
+const _normalizeTime = (t) => {
+  if (!t || typeof t !== 'string') return '00:00:00';
+  if (t.length === 5) return `${t}:00`;       // "14:00" -> "14:00:00"
+  if (t.length >= 8) return t.slice(0, 8);    // "14:00:00.123" -> "14:00:00"
+  return t;
+};
+
 export const getSessionLiveStatus = (session) => {
   if (!session || !session.date) return 'scheduled';
   try {
-    // Sowohl camelCase (Mock-Daten: startTime/endTime) als auch snake_case
-    // (Supabase: start_time/end_time) unterstuetzen, damit der Helper
-    // ueberall in der App funktioniert.
-    const startTime = session.startTime || session.start_time || '00:00';
-    const endTime = session.endTime || session.end_time || startTime || '23:59';
-    const start = new Date(`${session.date}T${startTime}:00`);
-    const end = new Date(`${session.date}T${endTime}:00`);
+    const startRaw = session.startTime || session.start_time;
+    const endRaw = session.endTime || session.end_time || startRaw;
+    if (!startRaw) return session.status || 'scheduled';
+
+    const start = new Date(`${session.date}T${_normalizeTime(startRaw)}`);
+    const end = new Date(`${session.date}T${_normalizeTime(endRaw)}`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return session.status || 'scheduled';
+    }
+
     const now = new Date();
     if (now >= start && now <= end) return 'live';
     if (now > end) return 'past';

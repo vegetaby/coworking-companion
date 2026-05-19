@@ -1,33 +1,89 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { T, S } from '../lib/theme'
 import { MOCK_ATTENDANCE_HISTORY } from '../data/mockData'
+import { fetchMyAttendances } from '../lib/api'
 import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
 import Tooltip from '../components/ui/Tooltip'
 
+// Helper: aus einer attendance-Row eine vereinheitlichte Form bauen,
+// damit der Code unten egal ist ob Live-Daten oder Mock kommen.
+function normalizeAttendance(row) {
+  return {
+    rating: row.rating,
+    title: row.title || row.session?.title || '',
+    date: row.date || row.session?.date || null,
+    startTime: row.start_time || row.session?.start_time || row.startTime,
+    routineStates: row.routine_states || row.routineStates || {},
+  }
+}
+
+const SLOT_BUCKETS = [
+  { label: '06:00 Früh', match: t => t && t.startsWith('06:') },
+  { label: '10:00 Vormittag', match: t => t && t.startsWith('10:') },
+  { label: '14:00 Nachmittag', match: t => t && (t.startsWith('14:') || t.startsWith('15:')) },
+]
+const WEEKDAY_NAMES = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']
+
 export default function AnalysePage() {
   const { routines } = useApp()
-  const history = MOCK_ATTENDANCE_HISTORY
-  const totalSessions = 52
-  const avgRating = (history.reduce((s,h) => s+h.rating, 0) / history.length).toFixed(1)
-  const avgRoutines = (history.reduce((s,h) => {
-    if (!h.routineStates) return s
-    const total = Object.keys(h.routineStates).length
-    const checked = Object.values(h.routineStates).filter(Boolean).length
-    return total > 0 ? s + (checked / total) : s
-  }, 0) / history.filter(h => h.routineStates && Object.keys(h.routineStates).length > 0).length * 100).toFixed(0)
-  const totalHours = history.reduce((s,h) => s + (h.title.includes("2h") ? 2 : 1), 0)
+  const { user } = useAuth()
 
-  const slotStats = [
-    { slot: "06:00 Früh", sessions: 18, avgRating: 4.4 },
-    { slot: "10:00 Vormittag", sessions: 22, avgRating: 4.6 },
-    { slot: "14:00 Nachmittag", sessions: 7, avgRating: 3.8 },
-  ]
-  const maxSlotSessions = Math.max(...slotStats.map(s => s.sessions))
+  // Eigene Attendances laden. Wenn der User noch keine hat, fallen wir
+  // auf MOCK_ATTENDANCE_HISTORY zurueck, damit die Seite nicht leer wirkt
+  // (und der User die UI verstehen kann).
+  const [liveHistory, setLiveHistory] = useState(null)
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    fetchMyAttendances(user.id)
+      .then(rows => {
+        if (cancelled) return
+        if (rows && rows.length > 0) setLiveHistory(rows)
+      })
+      .catch(err => console.warn('[Analyse] fetchMyAttendances failed', err))
+    return () => { cancelled = true }
+  }, [user?.id])
 
-  // Temporal routine impact
-  const routineImpact = routines.map(r => {
+  const history = useMemo(
+    () => (liveHistory ?? MOCK_ATTENDANCE_HISTORY).map(normalizeAttendance),
+    [liveHistory],
+  )
+  const ratedHistory = history.filter(h => typeof h.rating === 'number')
+
+  const totalSessions = history.length
+  const avgRating = ratedHistory.length > 0
+    ? (ratedHistory.reduce((s, h) => s + h.rating, 0) / ratedHistory.length).toFixed(1)
+    : '–'
+  const withRoutines = history.filter(h => h.routineStates && Object.keys(h.routineStates).length > 0)
+  const avgRoutines = withRoutines.length > 0
+    ? (withRoutines.reduce((s, h) => {
+        const total = Object.keys(h.routineStates).length
+        const checked = Object.values(h.routineStates).filter(Boolean).length
+        return total > 0 ? s + (checked / total) : s
+      }, 0) / withRoutines.length * 100).toFixed(0)
+    : '0'
+  const totalHours = history.reduce((s, h) => s + ((h.title || '').includes('2h') ? 2 : 1), 0)
+
+  // Slot-Analyse aus eigenen Daten
+  const slotStats = useMemo(() => {
+    return SLOT_BUCKETS.map(b => {
+      const sessions = history.filter(h => b.match(h.startTime))
+      const rated = sessions.filter(s => typeof s.rating === 'number')
+      const avgRating = rated.length > 0
+        ? +(rated.reduce((s, h) => s + h.rating, 0) / rated.length).toFixed(1)
+        : 0
+      return { slot: b.label, sessions: sessions.length, avgRating }
+    }).filter(s => s.sessions > 0)
+  }, [history])
+  const maxSlotSessions = Math.max(1, ...slotStats.map(s => s.sessions))
+
+  // Temporal routine impact — funktioniert sowohl mit echten Daten (routine_states aus DB)
+  // als auch Mock (routineStates aus mockData) dank normalizeAttendance.
+  const routineImpact = (routines || []).map(r => {
     const relevantSessions = history.filter(h => h.routineStates && r.label in h.routineStates)
     if (relevantSessions.length < 2) return null
     const withSessions = relevantSessions.filter(h => h.routineStates[r.label] === true)
@@ -45,11 +101,44 @@ export default function AnalysePage() {
     }
   }).filter(Boolean).sort((a, b) => parseFloat(b.diff) - parseFloat(a.diff))
 
-  const weekdayStats = [
-    { day: "Mo", sessions: 4 }, { day: "Di", sessions: 8 }, { day: "Mi", sessions: 14 },
-    { day: "Do", sessions: 10 }, { day: "Fr", sessions: 8 }, { day: "Sa", sessions: 2 }, { day: "So", sessions: 1 },
-  ]
-  const maxWd = Math.max(...weekdayStats.map(w => w.sessions))
+  // Wochentags-Verteilung dynamisch aus history
+  const weekdayStats = useMemo(() => {
+    const buckets = Object.fromEntries(['Mo','Di','Mi','Do','Fr','Sa','So'].map(d => [d, 0]))
+    for (const h of history) {
+      if (!h.date) continue
+      const d = new Date(h.date + 'T00:00:00')
+      const idx = (d.getDay() + 6) % 7 // Mo=0, ..., So=6
+      const label = ['Mo','Di','Mi','Do','Fr','Sa','So'][idx]
+      buckets[label] += 1
+    }
+    return ['Mo','Di','Mi','Do','Fr','Sa','So'].map(day => ({ day, sessions: buckets[day] }))
+  }, [history])
+  const maxWd = Math.max(1, ...weekdayStats.map(w => w.sessions))
+
+  // Monatlicher Verlauf: letzte 5 Monate dynamisch
+  const monthlyTrend = useMemo(() => {
+    const buckets = {}
+    for (const h of history) {
+      if (!h.date) continue
+      const d = new Date(h.date + 'T00:00:00')
+      const key = `${d.getFullYear()}-${d.getMonth()}`
+      if (!buckets[key]) buckets[key] = { year: d.getFullYear(), month: d.getMonth(), sessions: 0, ratingSum: 0, ratingCount: 0 }
+      buckets[key].sessions += 1
+      if (typeof h.rating === 'number') {
+        buckets[key].ratingSum += h.rating
+        buckets[key].ratingCount += 1
+      }
+    }
+    return Object.values(buckets)
+      .sort((a, b) => (a.year - b.year) * 100 + (a.month - b.month))
+      .slice(-5)
+      .map(b => ({
+        month: MONTH_SHORT[b.month],
+        sessions: b.sessions,
+        rating: b.ratingCount > 0 ? +(b.ratingSum / b.ratingCount).toFixed(1) : 0,
+      }))
+  }, [history])
+  const maxMonthly = Math.max(1, ...monthlyTrend.map(m => m.sessions))
 
   return (
     <div style={S.container}>
@@ -94,7 +183,7 @@ export default function AnalysePage() {
           ))}
           <div style={{ padding: "12px 16px", borderRadius: 10, background: `${T.success}10`, border: `1px solid ${T.success}20`, marginTop: 8 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: T.success }}>Empfehlung: Vormittag-Slots (10 Uhr)</div>
-            <div style={{ fontSize: 12, color: T.textMuted }}>Hier hast du die hoechste Ø-Bewertung</div>
+            <div style={{ fontSize: 12, color: T.textMuted }}>Hier hast du die höchste Ø-Bewertung</div>
           </div>
         </div>
 
@@ -124,7 +213,7 @@ export default function AnalysePage() {
         </div>
         <p style={{ fontSize: 13, color: T.textMuted, marginBottom: 16 }}>Angehakt vs. nicht angehakt — nur im Zeitraum, in dem die Routine aktiv getrackt wurde.</p>
         {routineImpact.length === 0 ? (
-          <div style={{ padding: 24, textAlign: "center", color: T.textMuted }}>Noch nicht genuegend Daten.</div>
+          <div style={{ padding: 24, textAlign: "center", color: T.textMuted }}>Noch nicht genügend Daten.</div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto auto auto", gap: "12px 16px", alignItems: "center" }}>
@@ -172,15 +261,11 @@ export default function AnalysePage() {
       <div style={S.card}>
         <h3 style={S.h3}>Monatlicher Verlauf</h3>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 16, height: 140, marginTop: 16 }}>
-          {[
-            { month: "Okt", sessions: 8, rating: 3.5 }, { month: "Nov", sessions: 12, rating: 3.8 },
-            { month: "Dez", sessions: 10, rating: 4.0 }, { month: "Jan", sessions: 15, rating: 4.1 },
-            { month: "Feb", sessions: 17, rating: 4.2 },
-          ].map((m, i) => (
+          {monthlyTrend.map((m, i) => (
             <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
               <div style={{ fontSize: 12, fontWeight: 700 }}>{m.sessions}</div>
               <div style={{ fontSize: 10, color: T.warning }}>Ø {m.rating}</div>
-              <div style={{ width: "100%", maxWidth: 48, height: `${(m.sessions/17)*100}%`, borderRadius: 8, background: T.gradient, minHeight: 12 }} />
+              <div style={{ width: "100%", maxWidth: 48, height: `${(m.sessions/maxMonthly)*100}%`, borderRadius: 8, background: T.gradient, minHeight: 12 }} />
               <span style={{ fontSize: 11, color: T.textMuted }}>{m.month}</span>
             </div>
           ))}

@@ -21,7 +21,7 @@ export default function CalExportModal() {
             <Icon name="google" size={24} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 15 }}>Google Calendar</div>
-              <div style={{ fontSize: 13, color: T.textMuted }}>Klicke, um den Kalender in Google Calendar zu oeffnen</div>
+              <div style={{ fontSize: 13, color: T.textMuted }}>Klicke, um den Kalender in Google Calendar zu öffnen</div>
             </div>
           </div>
         </div>
@@ -31,7 +31,7 @@ export default function CalExportModal() {
             <Icon name="apple" size={24} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 15 }}>Apple Calendar</div>
-              <div style={{ fontSize: 13, color: T.textMuted }}>Oeffnet den Kalender in Apple Kalender / iCal</div>
+              <div style={{ fontSize: 13, color: T.textMuted }}>Öffnet den Kalender in Apple Kalender / iCal</div>
             </div>
           </div>
         </div>
@@ -41,7 +41,7 @@ export default function CalExportModal() {
             <Icon name="link" size={20} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 15 }}>iCal-Link kopieren</div>
-              <div style={{ fontSize: 13, color: T.textMuted }}>Fuer Outlook oder andere Kalender-Apps</div>
+              <div style={{ fontSize: 13, color: T.textMuted }}>Für Outlook oder andere Kalender-Apps</div>
             </div>
           </div>
         </div>

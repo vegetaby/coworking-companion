@@ -5,6 +5,16 @@ import { T, S } from '../lib/theme'
 import { formatDate } from '../lib/utils'
 import { MOCK_ADMIN_STATS } from '../data/mockData'
 import Icon from '../components/ui/Icon'
+import {
+  fetchAdminCounts,
+  fetchPendingHostConfirmations,
+  fetchWeeklyTrend,
+  fetchTopMembers,
+  fetchNoShows,
+  fetchInactiveMembers,
+  fetchSessionAttendanceStats,
+  fetchSlotStats,
+} from '../lib/api'
 
 // Sektion "Feature-Sichtbarkeit": Admin schaltet ueber Toggles, welche
 // Sidebar-Eintraege fuer alle eingeloggten User sichtbar sind. Wert wird in
@@ -133,9 +143,42 @@ function FeatureFlagsSection() {
 }
 
 export default function AdminPage() {
-  const { isAdmin } = useAuth()
+  const [liveStats, setLiveStats] = useState(null)
+  const [liveWeekly, setLiveWeekly] = useState(null)
+  const [liveTopMembers, setLiveTopMembers] = useState(null)
+  const [liveNoShows, setLiveNoShows] = useState(null)
+  const [liveInactive, setLiveInactive] = useState(null)
+  const [liveSessionAtt, setLiveSessionAtt] = useState(null)
+  const [liveSlots, setLiveSlots] = useState(null)
 
-  const sessionAttendance = [
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([
+      fetchAdminCounts(),
+      fetchWeeklyTrend(),
+      fetchTopMembers(),
+      fetchNoShows(),
+      fetchInactiveMembers(),
+      fetchSessionAttendanceStats(),
+      fetchSlotStats(),
+    ])
+      .then(([stats, weekly, top, noShows, inactive, sessionAtt, slots]) => {
+        if (cancelled) return
+        setLiveStats(stats)
+        setLiveWeekly(weekly)
+        setLiveTopMembers(top)
+        setLiveNoShows(noShows)
+        setLiveInactive(inactive)
+        setLiveSessionAtt(sessionAtt)
+        setLiveSlots(slots)
+      })
+      .catch(err => console.warn('[Admin] aggregate fetch failed', err))
+    return () => { cancelled = true }
+  }, [])
+
+  const { isAdmin, user } = useAuth()
+
+  const sessionAttendance = liveSessionAtt ?? [
     { id: "s1", title: "1h Focus", date: "2026-03-04", time: "06:00", host: "Marcel", signedUp: 5, attended: 4, noShows: ["Laura K."] },
     { id: "s2", title: "2h Focus", date: "2026-03-04", time: "10:00", host: "Britta", signedUp: 7, attended: 7, noShows: [] },
     { id: "prev1", title: "2h Focus", date: "2026-02-27", time: "06:00", host: "Britta", signedUp: 6, attended: 5, noShows: ["Thomas B."] },
@@ -154,22 +197,30 @@ export default function AdminPage() {
   ]
   const maxSlotAvg = Math.max(...slotPopularity.map(s => s.avgSignups))
 
-  const noShowMembers = [
+  const noShowMembers = liveNoShows ?? [
     { name: "Laura K.", noShows: 4, totalSessions: 12, rate: "33%", lastNoShow: "2026-03-04" },
     { name: "Thomas B.", noShows: 3, totalSessions: 8, rate: "38%", lastNoShow: "2026-02-27" },
     { name: "Anna W.", noShows: 2, totalSessions: 5, rate: "40%", lastNoShow: "2026-02-24" },
     { name: "Simon R.", noShows: 1, totalSessions: 14, rate: "7%", lastNoShow: "2026-02-18" },
   ]
 
-  const pendingConfirmation = [
-    { session: "2h Focus Session – Britta", date: "2026-03-04", time: "10:00", signedUp: ["Gerd M.", "Marcel K.", "Doris S.", "Simon R.", "Britta E.", "Laura P.", "Thomas B."], confirmed: new Set(["Gerd M.", "Marcel K.", "Doris S.", "Simon R.", "Britta E."]) },
-  ]
-
-  const [confirmations, setConfirmations] = useState(() => {
-    const init = {}
-    pendingConfirmation.forEach(p => { init[p.session] = new Set(p.confirmed) })
-    return init
-  })
+  // Echte pending Host-Confirmations laden (Push 5: vorher Mock-Array)
+  const [pendingConfirmation, setPendingConfirmation] = useState([])
+  const [confirmations, setConfirmations] = useState({})
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    fetchPendingHostConfirmations(user.id)
+      .then(rows => {
+        if (cancelled) return
+        setPendingConfirmation(rows)
+        const init = {}
+        rows.forEach(p => { init[p.session] = new Set(p.confirmed) })
+        setConfirmations(init)
+      })
+      .catch(err => console.warn('[Admin] fetchPendingHostConfirmations failed', err))
+    return () => { cancelled = true }
+  }, [user?.id])
 
   const toggleConfirm = (sessionKey, name) => {
     setConfirmations(prev => {
@@ -194,11 +245,11 @@ export default function AdminPage() {
       {/* Overview Stats */}
       <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         {[
-          { l: "Sessions gesamt", v: MOCK_ADMIN_STATS.totalSessions, c: T.accent },
-          { l: "Anmeldungen", v: MOCK_ADMIN_STATS.totalAttendances.toLocaleString(), c: T.success },
-          { l: "Ø TN/Session", v: MOCK_ADMIN_STATS.avgPerSession, c: T.warning },
-          { l: "No-Show-Rate", v: noShowRate + "%", c: T.danger },
-          { l: "Members", v: "50", c: "#8b5cf6" },
+          { l: "Sessions gesamt", v: liveStats?.totalSessions ?? MOCK_ADMIN_STATS.totalSessions, c: T.accent },
+          { l: "Anmeldungen", v: (liveStats?.totalSignups ?? MOCK_ADMIN_STATS.totalAttendances).toLocaleString(), c: T.success },
+          { l: "Ø TN/Session", v: liveStats?.avgPerSession ?? MOCK_ADMIN_STATS.avgPerSession, c: T.warning },
+          { l: "No-Show-Rate", v: (liveStats?.noShowRate ?? noShowRate) + "%", c: T.danger },
+          { l: "Members", v: liveStats?.totalMembers ?? "50", c: "#8b5cf6" },
         ].map((m, i) => (
           <div key={i} style={{ ...S.card, flex: "1 1 150px", textAlign: "center" }}>
             <div style={{ fontSize: 28, fontWeight: 800, color: m.c }}>{m.v}</div>
@@ -213,8 +264,8 @@ export default function AdminPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: `${T.warning}20`, display: "flex", alignItems: "center", justifyContent: "center", color: T.warning }}><Icon name="clipboard" size={20} /></div>
             <div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Anwesenheit bestaetigen</h3>
-              <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>Wer war wirklich dabei?</p>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Anwesenheit bestätigen</h3>
+              <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>Wer war dabei?</p>
             </div>
           </div>
           {pendingConfirmation.map((p, pi) => (
@@ -238,7 +289,7 @@ export default function AdminPage() {
                 })}
               </div>
               <div style={{ fontSize: 12, color: T.textMuted }}>
-                {confirmations[p.session]?.size || 0} von {p.signedUp.length} bestaetigt
+                {confirmations[p.session]?.size || 0} von {p.signedUp.length} bestätigt
               </div>
             </div>
           ))}
@@ -286,7 +337,7 @@ export default function AdminPage() {
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>{s.avgSignups}</div>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 4 }}>Ø Tatsaechlich da</div>
+                  <div style={{ fontSize: 11, color: T.textMuted, marginBottom: 4 }}>Ø Tatsächlich da</div>
                   <div style={{ ...S.progressBar, height: 8 }}><div style={S.progressFill((s.avgAttended/maxSlotAvg)*100, T.success)} /></div>
                   <div style={{ fontSize: 13, fontWeight: 700, marginTop: 4, color: T.success }}>{s.avgAttended}</div>
                 </div>
@@ -299,10 +350,10 @@ export default function AdminPage() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 24 }}>
         {/* Weekly Trend */}
         <div style={S.card}>
-          <h3 style={S.h3}>Woechentlicher Trend</h3>
+          <h3 style={S.h3}>Wöchentlicher Trend</h3>
           <div style={{ display: "flex", alignItems: "end", gap: 12, height: 160, marginTop: 16 }}>
-            {MOCK_ADMIN_STATS.weeklyTrend.map((w, i) => {
-              const max = Math.max(...MOCK_ADMIN_STATS.weeklyTrend.map(x => x.count))
+            {(liveWeekly ?? MOCK_ADMIN_STATS.weeklyTrend).map((w, i) => {
+              const max = Math.max(...(liveWeekly ?? MOCK_ADMIN_STATS.weeklyTrend).map(x => x.count))
               return (<div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>{w.count}</span>
                 <div style={{ width: "100%", maxWidth: 48, height: `${(w.count/max)*100}%`, borderRadius: 8, background: T.gradient, minHeight: 20 }} />
@@ -315,7 +366,7 @@ export default function AdminPage() {
         {/* Top Members */}
         <div style={S.card}>
           <h3 style={S.h3}>Top Members</h3>
-          {MOCK_ADMIN_STATS.topMembers.map((m, i) => (
+          {(liveTopMembers ?? MOCK_ADMIN_STATS.topMembers).map((m, i) => (
             <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: i<4 ? `1px solid ${T.border}` : "none" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <span style={{ width: 28, height: 28, borderRadius: "50%", background: T.gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{i+1}</span>
@@ -348,7 +399,7 @@ export default function AdminPage() {
         <div style={{ ...S.card, background: `linear-gradient(135deg, rgba(136,136,164,0.05), ${T.card})` }}>
           <h3 style={S.h3}>Inaktive Members</h3>
           {[
-            ...MOCK_ADMIN_STATS.dropOff,
+            ...(liveInactive ?? MOCK_ADMIN_STATS.dropOff),
             { name: "Anna W.", lastSeen: "2026-02-10", sessions: 5 },
             { name: "Peter F.", lastSeen: "2025-12-20", sessions: 3 },
           ].map((d, i) => (

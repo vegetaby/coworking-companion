@@ -10,6 +10,23 @@ const AuthContext = createContext({})
 const PROFILE_FETCH_MAX_ATTEMPTS = 3
 const PROFILE_FETCH_BASE_DELAY_MS = 400
 
+// Erkennt invalid/expired Token-Fehler, bei denen ein Retry sinnlos ist.
+// Wir machen dann lieber einen sauberen Logout, statt den User in einem
+// "Ghost"-Zustand zu lassen (User-Objekt da, aber Profil null).
+const _isAuthError = (err) => {
+  if (!err) return false
+  const code = err.status || err.statusCode || err.code
+  const msg = (err.message || '').toLowerCase()
+  return (
+    code === 401 || code === '401' ||
+    code === 'PGRST301' ||           // JWT expired (PostgREST)
+    msg.includes('jwt expired') ||
+    msg.includes('invalid jwt') ||
+    msg.includes('invalid token') ||
+    msg.includes('not authenticated')
+  )
+}
+
 const fetchProfileWithRetry = async (userId) => {
   let lastError = null
   for (let attempt = 1; attempt <= PROFILE_FETCH_MAX_ATTEMPTS; attempt++) {
@@ -21,14 +38,14 @@ const fetchProfileWithRetry = async (userId) => {
         .single()
       if (error) {
         lastError = error
-        // PGRST116 = "no rows" -> Profil existiert (noch) nicht.
-        // Kein Retry, einfach null zurueck.
         if (error.code === 'PGRST116') return { data: null, error: null }
+        if (_isAuthError(error)) return { data: null, error, isAuthError: true }
         throw error
       }
       return { data, error: null }
     } catch (err) {
       lastError = err
+      if (_isAuthError(err)) return { data: null, error: err, isAuthError: true }
       console.warn(
         `[Auth] fetchProfile attempt ${attempt}/${PROFILE_FETCH_MAX_ATTEMPTS} failed:`,
         err?.message || err
@@ -49,7 +66,17 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = async (userId) => {
-    const { data } = await fetchProfileWithRetry(userId)
+    const { data, isAuthError } = await fetchProfileWithRetry(userId)
+    if (isAuthError) {
+      // Token tot/invalidiert (z. B. nach Logout-Reload mit altem localStorage,
+      // oder Session expired). Statt halb-eingeloggt zu rendern: clean logout.
+      console.warn('[Auth] fetchProfile got auth error, clearing session')
+      try { await supabase.auth.signOut({ scope: 'local' }) } catch {}
+      try { window.localStorage.clear() } catch {}
+      setUser(null)
+      setProfile(null)
+      return
+    }
     setProfile(data)
   }
 

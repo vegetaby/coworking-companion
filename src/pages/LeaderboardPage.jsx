@@ -2,6 +2,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { T, S } from '../lib/theme'
 import { MOCK_LEADERBOARD } from '../data/mockData'
+import { fetchLeaderboard } from '../lib/api'
 import Icon from '../components/ui/Icon'
 import Tooltip from '../components/ui/Tooltip'
 
@@ -9,8 +10,17 @@ export default function LeaderboardPage() {
   const { profile } = useAuth()
   const { lbPeriod, setLbPeriod } = useApp()
 
+  const [liveBoard, setLiveBoard] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    fetchLeaderboard(undefined, lbPeriod)
+      .then(rows => { if (!cancelled && rows && rows.length > 0) setLiveBoard(rows) })
+      .catch(err => console.warn('[Leaderboard] fetch failed', err))
+    return () => { cancelled = true }
+  }, [lbPeriod])
+
   const periods = [{key:"7d",label:"7 Tage"},{key:"30d",label:"30 Tage"},{key:"allzeit",label:"Allzeit"}]
-  const data = MOCK_LEADERBOARD[lbPeriod]
+  const data = liveBoard ?? MOCK_LEADERBOARD[lbPeriod]
   const maxS = data[0]?.sessions || 1
   const medals = ["#fbbf24","#9ca3af","#b45309"]
 

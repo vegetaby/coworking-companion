@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { MOCK_ROUTINES } from '../data/mockData'
 import { useAuth } from './AuthContext'
 import {
   fetchSessions,
@@ -44,7 +43,7 @@ export function AppProvider({ children }) {
   //       umgestellt ist. -----
   const [goals, setGoals] = useState({})
   const [routineChecks, setRoutineChecks] = useState({})
-  const [routines, setRoutines] = useState(MOCK_ROUTINES)
+  const [routines, setRoutines] = useState([])
   const [lbPeriod, setLbPeriod] = useState('7d')
 
   // ----- Echte Supabase-Daten -----

@@ -58,3 +58,31 @@ body {
 .animate-pulse-live {
   animation: pulse-live 2s ease-in-out infinite;
 }
+
+
+/* ============================================
+   Mobile Optimizations (≤ 640px = sm-breakpoint)
+   ============================================ */
+@media (max-width: 640px) {
+  /* Allgemein: Padding/FontSize runtersetzen */
+  body { font-size: 15px; }
+
+  /* Cards / Containers: weniger Padding */
+  .cw-mobile-tight {
+    padding: 16px !important;
+  }
+
+  /* Modals duerfen voll werden ohne abzuschneiden */
+  .cw-modal-content {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    padding: 20px !important;
+  }
+}
+
+/* Modal-Default — wird auch ohne Klasse genutzt fuer Overflow-Safety */
+.cw-modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}

@@ -32,7 +32,7 @@ export const S = {
   input: { width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: T.bg, color: T.text, fontSize: 15, boxSizing: "border-box", outline: "none" },
   textarea: { width: "100%", padding: "12px 16px", borderRadius: 10, border: `1px solid ${T.border}`, background: T.bg, color: T.text, fontSize: 15, minHeight: 80, resize: "vertical", boxSizing: "border-box", outline: "none", fontFamily: "inherit" },
   modal: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 300, padding: 24 },
-  modalContent: { background: T.card, borderRadius: 20, padding: 32, maxWidth: 500, width: "100%", border: `1px solid ${T.border}`, color: T.text },
+  modalContent: { background: T.card, borderRadius: 20, padding: 32, maxWidth: 500, width: "100%", border: `1px solid ${T.border}`, color: T.text, maxHeight: '90vh', overflowY: 'auto' },
   statNum: { fontSize: 36, fontWeight: 800, background: T.gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" },
   progressBar: { height: 6, borderRadius: 3, background: T.border, position: "relative", overflow: "hidden", width: "100%" },
   progressFill: (pct, color=T.accent) => ({ position: "absolute", top:0, left:0, height: "100%", width: `${pct}%`, borderRadius: 3, background: color }),

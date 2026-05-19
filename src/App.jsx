@@ -190,6 +190,16 @@ function Modals() {
   )
 }
 
+function NotFoundPage() {
+  return (
+    <div style={{ padding: 48, textAlign: 'center', minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+      <h2 style={{ fontSize: 28, fontWeight: 800 }}>Seite nicht gefunden</h2>
+      <p style={{ color: 'rgba(228,228,237,0.6)' }}>Diese URL existiert nicht. Geh zurück zum Dashboard.</p>
+      <a href="/" style={{ marginTop: 16, padding: '10px 20px', borderRadius: 10, background: '#7c3aed', color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Zurück</a>
+    </div>
+  )
+}
+
 function AppLayout() {
   const { user, loading } = useAuth()
   const location = useLocation()
@@ -236,6 +246,7 @@ function AppLayout() {
                 fuer alle freischalten. */}
             <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/analyse" element={<AnalysePage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
       </div>

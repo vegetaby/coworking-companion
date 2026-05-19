@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { T, S } from '../lib/theme'
 import { formatDate, getSessionLiveStatus, isSessionPast } from '../lib/utils'
+import { fetchPublicStats, fetchPublicSessions } from '../lib/api'
 import { MOCK_SESSIONS } from '../data/mockData'
 import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
@@ -23,9 +24,25 @@ const bgSection = (url, overlay = 'rgba(15,15,20,0.6)') => ({
 
 export default function LandingPage() {
   const [authMode, setAuthMode] = useState(null) // null | 'login' | 'signup'
+  const [stats, setStats] = useState(null)
+  const [publicSessions, setPublicSessions] = useState(null)
   const openLogin = () => setAuthMode('login')
   const openSignup = () => setAuthMode('signup')
   const closeAuth = () => setAuthMode(null)
+
+  useEffect(() => {
+    // Public Stats + Sessions fuer die Stats-Bar / Session-Cards.
+    // anon darf SELECT seit Migration 007.
+    let cancelled = false
+    Promise.all([fetchPublicStats(), fetchPublicSessions()])
+      .then(([s, sessions]) => {
+        if (cancelled) return
+        if (s) setStats(s)
+        if (sessions && sessions.length > 0) setPublicSessions(sessions)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div data-theme="dark" style={{ background: 'rgb(var(--c-bg))', color: 'rgb(var(--c-text))' }}>
@@ -37,25 +54,25 @@ export default function LandingPage() {
           <span style={{ fontWeight: 700, fontSize: 16 }}>The CoWorking Space</span>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <button style={{ ...S.btn("outline"), fontSize: 14 }} onClick={openLogin}>Anmelden</button>
-          <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none" }}>Kostenlos beitreten</a>
+          <button style={{ ...S.btn("outline"), fontSize: 14, border: `1.5px solid ${T.accentLight}`, color: T.accentLight }} onClick={openLogin}>Login</button>
+          <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none" }}>Kostenlos der Community beitreten</a>
         </div>
       </header>
 
       {/* Hero with full background image */}
-      <div style={{ ...bgSection(IMG.hero, 'rgba(15,15,20,0.4)'), minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px' }}>
+      <div style={{ ...bgSection(IMG.hero, 'rgba(15,15,20,0.7)'), minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '120px 24px 80px' }}>
         <div style={{ maxWidth: 800 }}>
           <div style={{ ...S.badge(T.accentLight), margin: '0 auto 24px', display: 'inline-flex' }}>Kostenlose Community</div>
-          <h1 style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.12, marginBottom: 20 }}>
+          <h1 style={{ fontSize: 'clamp(32px, 7vw, 52px)', fontWeight: 800, lineHeight: 1.12, marginBottom: 20 }}>
             Schluss mit Prokrastination.
             <br /><span style={{ color: '#c4b5fd' }}>Gemeinsam fokussiert arbeiten.</span>
           </h1>
-          <p style={{ fontSize: 18, color: 'rgba(228,228,237,0.8)', marginBottom: 40, maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
+          <p style={{ fontSize: 'clamp(14px, 3.5vw, 18px)', color: 'rgba(228,228,237,0.8)', marginBottom: 40, maxWidth: 600, margin: '0 auto 40px', lineHeight: 1.7 }}>
             Tritt der kostenlosen Skool CoWorking Community bei und arbeite in fokussierten Live-Sessions gemeinsam mit anderen per Zoom.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '14px 32px', fontSize: 16 }}>Kostenlos beitreten</a>
-            <button style={{ ...S.btn("outline"), padding: '14px 32px', fontSize: 16 }} onClick={openLogin}>Anmelden</button>
+            <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '14px 32px', fontSize: 16 }}>Kostenlos der Community beitreten</a>
+            <button style={{ ...S.btn("outline"), padding: '14px 32px', fontSize: 16, border: `1.5px solid ${T.accentLight}`, color: T.accentLight }} onClick={openLogin}>Login</button>
           </div>
         </div>
       </div>
@@ -64,13 +81,13 @@ export default function LandingPage() {
       <div style={{ background: T.bg, padding: '48px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 16 }}>
           {[
-            { num: "342", label: "Fokus Sessions", icon: "target" },
-            { num: "1.240", label: "Teilnahmen", icon: "users" },
-            { num: "50", label: "Community Members", icon: "flame" },
+            { num: stats ? `${stats.sessionsDisplay}+` : "300+", label: "Fokus Sessions", icon: "target" },
+            { num: stats ? `${stats.signupsDisplay.toLocaleString('de-DE')}+` : "1.000+", label: "Teilnahmen", icon: "users" },
+            { num: stats ? `${stats.membersDisplay}+` : "50+", label: "Community Members", icon: "flame" },
           ].map((s, i) => (
             <div key={i} style={{ textAlign: "center", padding: 24, flex: "1 1 180px" }}>
               <div style={{ color: T.accentLight, marginBottom: 8 }}><Icon name={s.icon} size={28} /></div>
-              <div style={{ fontSize: 36, fontWeight: 800, background: T.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{s.num}</div>
+              <div style={{ fontSize: 'clamp(28px, 6vw, 36px)', fontWeight: 800, background: T.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{s.num}</div>
               <div style={{ fontSize: 13, color: T.textMuted, marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
@@ -80,8 +97,8 @@ export default function LandingPage() {
       {/* Features */}
       <div style={{ ...bgSection(IMG.benefits, 'rgba(15,15,20,0.82)'), padding: '72px 24px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Was dich erwartet</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}>
+          <h2 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Was dich erwartet</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, maxWidth: 800, margin: '0 auto' }}>
             {[
               { icon: "target", title: "Tägliche Fokus Sessions", desc: "Strukturiertes Deep Work in 1h- und 2h-Slots mit Check-in und Austausch." },
               { icon: "pieChart", title: "Persönliches Dashboard", desc: "Streaks, Produktivitäts-Insights und deine Fokus-Statistiken auf einen Blick." },
@@ -100,30 +117,68 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Upcoming Sessions */}
-      <div style={{ background: T.bg, padding: '72px 24px' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Nächste Fokus Sessions</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {MOCK_SESSIONS.filter(s => !isSessionPast(s)).slice(0, 4).map(session => (
-              <div key={session.id} style={{ ...S.card, cursor: "pointer", transition: 'transform 0.2s' }} onClick={openLogin}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                  <span style={S.badge(session.host === "Britta" ? "#8b5cf6" : "#3b82f6")}>{session.host}</span>
-                  {getSessionLiveStatus(session) === "live" && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, ...S.badge(T.danger) }}>
-                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.danger }} /> LIVE
-                    </span>
-                  )}
-                </div>
-                <h3 style={{ ...S.h3, marginBottom: 8 }}>{session.title}</h3>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.textMuted, fontSize: 14 }}>
-                  <Icon name="calendar" size={15} /> {formatDate(session.date)}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.textMuted, fontSize: 14, marginTop: 4 }}>
-                  <Icon name="clock" size={15} /> {session.startTime} - {session.endTime} Uhr
-                </div>
-              </div>
-            ))}
+      {/* Upcoming Sessions — schwarz mit animierten lila Wellen */}
+      <div style={{ position: 'relative', background: T.bg, padding: '72px 24px', overflow: 'hidden' }}>
+        {/* Animierte Wellen-Hintergrund (SVG, CSS-animiert) */}
+        <svg
+          aria-hidden
+          viewBox="0 0 1440 600"
+          preserveAspectRatio="none"
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            pointerEvents: 'none', opacity: 0.18,
+          }}
+        >
+          <defs>
+            <linearGradient id="wave-grad" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#7c3aed" stopOpacity="0" />
+              <stop offset="50%" stopColor="#a78bfa" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M0,300 Q360,180 720,300 T1440,300 L1440,600 L0,600 Z" fill="url(#wave-grad)">
+            <animate attributeName="d"
+              dur="14s" repeatCount="indefinite"
+              values="M0,300 Q360,180 720,300 T1440,300 L1440,600 L0,600 Z;
+                      M0,310 Q360,420 720,310 T1440,310 L1440,600 L0,600 Z;
+                      M0,300 Q360,180 720,300 T1440,300 L1440,600 L0,600 Z" />
+          </path>
+          <path d="M0,360 Q360,260 720,360 T1440,360 L1440,600 L0,600 Z" fill="url(#wave-grad)" opacity="0.55">
+            <animate attributeName="d"
+              dur="20s" repeatCount="indefinite"
+              values="M0,360 Q360,260 720,360 T1440,360 L1440,600 L0,600 Z;
+                      M0,370 Q360,470 720,370 T1440,370 L1440,600 L0,600 Z;
+                      M0,360 Q360,260 720,360 T1440,360 L1440,600 L0,600 Z" />
+          </path>
+        </svg>
+        <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Nächste Fokus Sessions</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20, maxWidth: 800, margin: '0 auto' }}>
+            {(publicSessions ?? MOCK_SESSIONS.filter(s => !isSessionPast(s))).slice(0, 4).map(session => {
+              // Normalize: Live-Daten haben host_name/start_time, Mock-Daten host/startTime
+              const host = session.host || session.host_name || 'Host'
+              const startTime = session.startTime || (session.start_time || '').slice(0, 5)
+              const endTime = session.endTime || (session.end_time || '').slice(0, 5)
+              return (
+                  <div key={session.id} style={{ ...S.card, cursor: "pointer", transition: 'transform 0.2s' }} onClick={openLogin}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
+                      <span style={S.badge(host === "Britta" ? "#8b5cf6" : "#3b82f6")}>{host}</span>
+                      {getSessionLiveStatus(session) === "live" && (
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, ...S.badge(T.danger) }}>
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.danger }} /> LIVE
+                        </span>
+                      )}
+                    </div>
+                    <h3 style={{ ...S.h3, marginBottom: 8 }}>{session.title}</h3>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.textMuted, fontSize: 14 }}>
+                      <Icon name="calendar" size={15} /> {formatDate(session.date)}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: T.textMuted, fontSize: 14, marginTop: 4 }}>
+                      <Icon name="clock" size={15} /> {startTime} - {endTime} Uhr
+                    </div>
+                  </div>
+                )
+              })}
           </div>
         </div>
       </div>
@@ -131,7 +186,7 @@ export default function LandingPage() {
       {/* So funktioniert's */}
       <div style={{ ...bgSection(IMG.howItWorks, 'rgba(15,15,20,0.8)'), padding: '72px 24px' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>So funktioniert's</h2>
+          <h2 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>So funktioniert's</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24 }}>
             {[
               { step: "1", title: "Community beitreten", desc: "Kostenlos auf Skool registrieren und dem CoWorking Space beitreten." },
@@ -151,7 +206,7 @@ export default function LandingPage() {
       {/* Testimonials */}
       <div style={{ ...bgSection(IMG.testimonials, 'rgba(15,15,20,0.82)'), padding: '72px 24px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Was unsere Members sagen</h2>
+          <h2 style={{ fontSize: 'clamp(22px, 5vw, 32px)', fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Was unsere Members sagen</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
             {[
               { name: "Gerd M.", role: "Selbstständiger Berater", text: "Die Fokus Sessions haben meine Produktivität verdoppelt. Endlich nicht mehr allein im Homeoffice!", avatar: "G" },
@@ -175,14 +230,14 @@ export default function LandingPage() {
       </div>
 
       {/* CTA */}
-      <div style={{ ...bgSection(IMG.cta, 'rgba(15,15,20,0.6)'), padding: '80px 24px', textAlign: 'center' }}>
+      <div style={{ ...bgSection(IMG.cta, 'rgba(15,15,20,0.78)'), padding: '80px 24px', textAlign: 'center' }}>
         <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 16 }}>Bereit für fokussiertes Arbeiten?</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 6vw, 36px)', fontWeight: 800, marginBottom: 16 }}>Bereit für fokussiertes Arbeiten?</h2>
           <p style={{ fontSize: 17, color: 'rgba(228,228,237,0.8)', marginBottom: 36, lineHeight: 1.7 }}>
             Tritt jetzt der kostenlosen Community bei und erlebe den Unterschied, den gemeinsames Arbeiten macht.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '16px 36px', fontSize: 17 }}>Kostenlos beitreten</a>
+            <a href="https://www.skool.com/coworking-space-5938" target="_blank" rel="noopener" style={{ ...S.btn("primary"), textDecoration: "none", padding: '16px 36px', fontSize: 17 }}>Kostenlos der Community beitreten</a>
           </div>
         </div>
       </div>
