@@ -78,10 +78,22 @@ export function AuthProvider({ children }) {
     } catch {}
   }
 
+  // Push 5.4: Optimistic Auth — wenn ein Supabase-Token im localStorage liegt,
+  // gehen wir davon aus dass der User eingeloggt ist und rendern die UI sofort.
+  // Vorher zeigte die App 0.5-6s Loading-Screen waehrend getSession() lief.
+  const _hasAuthToken = () => {
+    try {
+      return Object.keys(window.localStorage).some(
+        k => k.startsWith('sb-') && k.endsWith('-auth-token')
+      )
+    } catch { return false }
+  }
+
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(() => _readCachedProfile())
-  // loading nur initial true wenn KEIN cached Profile da
-  const [loading, setLoading] = useState(() => !_readCachedProfile())
+  // loading=false wenn entweder cached Profile ODER auth-token da ist.
+  // Nur wirklich-leerer State (kein User, kein Token) zeigt Loading-Screen.
+  const [loading, setLoading] = useState(() => !(_readCachedProfile() || _hasAuthToken()))
 
   const fetchProfile = async (userId) => {
     const { data, isAuthError } = await fetchProfileWithRetry(userId)

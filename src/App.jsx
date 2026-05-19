@@ -200,8 +200,21 @@ function NotFoundPage() {
   )
 }
 
+// Push 5.4: optimistic flag - true wenn auth-token im localStorage liegt
+const _hasAuthTokenSync = () => {
+  try {
+    return Object.keys(window.localStorage).some(
+      k => k.startsWith('sb-') && k.endsWith('-auth-token')
+    )
+  } catch { return false }
+}
+
 function AppLayout() {
   const { user, loading } = useAuth()
+  // Wenn user noch null aber Token vorhanden -> wir warten kurz aber rendern
+  // den Loading-Screen NICHT. Stattdessen rendern wir bewusst nichts (leerer Container)
+  // damit die App nicht zwischen Landing und Dashboard flackert.
+  const optimisticAuth = _hasAuthTokenSync()
   const location = useLocation()
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_KEY) === '1')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -210,16 +223,24 @@ function AppLayout() {
     localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0')
   }, [collapsed])
 
-  if (loading) {
+  // Loading-Screen nur zeigen wenn wirklich nichts cached ist (kein Token, kein Profile).
+  if (loading && !optimisticAuth) {
     return <LoadingScreen />
   }
 
-  if (!user && location.pathname === '/') {
+  // Wenn Token da aber User noch nicht hydrated: kurzer leerer Container,
+  // dann renderen wir das Dashboard (User-Daten kommen unmittelbar danach).
+  if (!user && !optimisticAuth && location.pathname === '/') {
     return <LandingPage />
   }
 
-  if (!user) {
+  if (!user && !optimisticAuth) {
     return <Navigate to="/" replace />
+  }
+
+  // Wenn user noch null aber optimisticAuth -> minimaler Skeleton (verhindert Flackern)
+  if (!user && optimisticAuth) {
+    return <div style={{ minHeight: '100vh', background: 'rgb(var(--c-bg))' }} aria-hidden />
   }
 
   return (
