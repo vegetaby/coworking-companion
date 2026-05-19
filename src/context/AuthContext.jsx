@@ -61,9 +61,27 @@ const fetchProfileWithRetry = async (userId) => {
 }
 
 export function AuthProvider({ children }) {
+  // Push 5.3: Profile-Cache fuer instant-Anzeige beim Reload.
+  // Statt erst auf Supabase zu warten zeigen wir cached display_name
+  // sofort an und holen frisches Profile im Hintergrund.
+  const PROFILE_CACHE_KEY = 'cw-profile-cache'
+  const _readCachedProfile = () => {
+    try {
+      const raw = window.localStorage.getItem(PROFILE_CACHE_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch { return null }
+  }
+  const _writeCachedProfile = (p) => {
+    try {
+      if (p) window.localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(p))
+      else window.localStorage.removeItem(PROFILE_CACHE_KEY)
+    } catch {}
+  }
+
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [profile, setProfile] = useState(() => _readCachedProfile())
+  // loading nur initial true wenn KEIN cached Profile da
+  const [loading, setLoading] = useState(() => !_readCachedProfile())
 
   const fetchProfile = async (userId) => {
     const { data, isAuthError } = await fetchProfileWithRetry(userId)
@@ -86,6 +104,7 @@ export function AuthProvider({ children }) {
       return
     }
     setProfile(data)
+    _writeCachedProfile(data)
   }
 
   useEffect(() => {
@@ -202,10 +221,11 @@ export function AuthProvider({ children }) {
       console.warn('[Auth] signOut threw, falling back to local cleanup:', err?.message || err)
     }
 
-    // Lokalen State IMMER cleanen, egal was passiert ist
+    // Lokalen State + Profile-Cache IMMER cleanen
     try {
       setUser(null)
       setProfile(null)
+      _writeCachedProfile(null)
     } catch {
       // ignore - im worst case macht der Reload das
     }
