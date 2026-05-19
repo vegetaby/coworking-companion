@@ -1,0 +1,48 @@
+-- =============================================================================
+-- Migration NNN: [Kurztitel - was macht diese Migration?]
+-- =============================================================================
+-- [1-3 Saetze: Was wird geaendert, warum, was ist der Business-Wert?]
+--
+-- Idempotent: kann mehrfach ausgefuehrt werden.
+-- =============================================================================
+
+-- 1. Tabelle anlegen -----------------------------------------------------------
+
+create table if not exists public.NEUE_TABELLE (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade,
+  -- ... weitere Spalten
+  created_at timestamptz not null default now()
+);
+
+-- 2. Row-Level-Security aktivieren ---------------------------------------------
+-- WICHTIG: RLS muss aktiviert sein, sonst sind die Policies wirkungslos.
+
+alter table public.NEUE_TABELLE enable row level security;
+
+-- 3. Policies definieren -------------------------------------------------------
+
+create policy "Nutzer sehen nur eigene Eintraege"
+  on public.NEUE_TABELLE
+  for select to authenticated
+  using (auth.uid() = user_id);
+
+create policy "Nutzer koennen eigene Eintraege erstellen"
+  on public.NEUE_TABELLE
+  for insert to authenticated
+  with check (auth.uid() = user_id);
+
+-- 4. GRANTs setzen -------------------------------------------------------------
+-- AB 30. OKTOBER 2026: ohne diese GRANTs ist die Tabelle ueber die Data API
+-- (supabase-js, REST, GraphQL) nicht erreichbar — auch wenn RLS-Policies
+-- passen. Die default privileges aus Migration 007 fangen das ab, aber
+-- explizit ist besser als implizit:
+
+grant select, insert, update, delete on public.NEUE_TABELLE to authenticated;
+grant select, insert, update, delete on public.NEUE_TABELLE to service_role;
+-- grant select on public.NEUE_TABELLE to anon;  -- nur wenn oeffentlich lesbar
+
+-- 5. Indexes (falls noetig) ----------------------------------------------------
+
+-- create index if not exists idx_NEUE_TABELLE_user_id
+--   on public.NEUE_TABELLE (user_id);
