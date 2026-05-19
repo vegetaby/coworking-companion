@@ -20,7 +20,7 @@ export default function AnalysePage() {
   const totalHours = history.reduce((s,h) => s + (h.title.includes("2h") ? 2 : 1), 0)
 
   const slotStats = [
-    { slot: "06:00 Frueh", sessions: 18, avgRating: 4.4 },
+    { slot: "06:00 Früh", sessions: 18, avgRating: 4.4 },
     { slot: "10:00 Vormittag", sessions: 22, avgRating: 4.6 },
     { slot: "14:00 Nachmittag", sessions: 7, avgRating: 3.8 },
   ]
@@ -118,7 +118,7 @@ export default function AnalysePage() {
       <div style={S.card}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 4 }}>
           <h3 style={S.h3}>Routine-Impact</h3>
-          <Tooltip text="Vergleich: angehakt vs. nicht angehakt — NUR fuer Sessions, in denen die Routine aktiv getrackt wurde.">
+          <Tooltip text="Vergleich: angehakt vs. nicht angehakt — NUR für Sessions, in denen die Routine aktiv getrackt wurde.">
             <span style={{ color: T.textMuted, cursor: "help" }}><Icon name="info" size={16} /></span>
           </Tooltip>
         </div>

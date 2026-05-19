@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { T, S } from '../lib/theme'
-import { formatDate } from '../lib/utils'
+import { formatDate, isSessionLive } from '../lib/utils'
 import Icon from '../components/ui/Icon'
 import Tooltip from '../components/ui/Tooltip'
 
@@ -51,9 +51,9 @@ export default function DashboardPage() {
   ), [realSessions, realSignedUp])
 
   // Live-Session = Status 'live' (von update_session_statuses() server-seitig gesetzt)
-  const liveAndSignedUp = mySessions.find(s => s.status === 'live')
+  const liveAndSignedUp = mySessions.find(s => isSessionLive(s))
 
-  // Naechste Session: scheduled, und entweder zukuenftiges Datum, oder heute mit start_time in der Zukunft.
+  // Nächste Session: scheduled, und entweder zukuenftiges Datum, oder heute mit start_time in der Zukunft.
   const nextSignedUp = useMemo(() => {
     const now = new Date()
     const todayStr = now.toISOString().slice(0, 10)
@@ -103,7 +103,7 @@ export default function DashboardPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: T.accentGlow, display: "flex", alignItems: "center", justifyContent: "center", color: T.accentLight }}><Icon name="calendar" size={20} /></div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>Naechste Session: {nextSignedUp.title}</div>
+              <div style={{ fontWeight: 700, fontSize: 16 }}>Nächste Session: {nextSignedUp.title}</div>
               <div style={{ fontSize: 13, color: T.textMuted }}>{formatDate(nextSignedUp.date)} · {trimTime(nextSignedUp.start_time)} – {trimTime(nextSignedUp.end_time)} mit {nextSignedUp.host_name}</div>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             hint: totalSessions === 0 ? "Noch keine — komm wieder wenn du Sessions besucht hast" : null,
           },
           {
-            label: "Ø Produktivitaet",
+            label: "Ø Produktivität",
             value: avgRating != null ? `${avgRating}/5` : "—",
             icon: "star",
             color: T.warning,

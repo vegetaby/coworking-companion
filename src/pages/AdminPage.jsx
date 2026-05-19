@@ -56,12 +56,12 @@ function FeatureFlagsSection() {
         <div>
           <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Feature-Sichtbarkeit</h3>
           <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>
-            Steuere, welche Sidebar-Eintraege fuer alle Mitglieder sichtbar sind.
+            Steuere, welche Sidebar-Einträge für alle Mitglieder sichtbar sind.
           </p>
         </div>
       </div>
       <p style={{ fontSize: 12, color: T.textMuted, marginBottom: 16 }}>
-        Aenderungen wirken nach Reload der Seite fuer alle User.
+        Änderungen wirken nach Reload der Seite für alle User.
       </p>
 
       {rows.length === 0 ? (
@@ -148,7 +148,7 @@ export default function AdminPage() {
   const noShowRate = ((1 - totalAttended / totalSignedUp) * 100).toFixed(1)
 
   const slotPopularity = [
-    { slot: "06:00 Frueh", avgSignups: 5.5, avgAttended: 4.8, sessions: 12, trend: "up" },
+    { slot: "06:00 Früh", avgSignups: 5.5, avgAttended: 4.8, sessions: 12, trend: "up" },
     { slot: "10:00 Vormittag", avgSignups: 6.2, avgAttended: 5.9, sessions: 18, trend: "up" },
     { slot: "14:00/14:30 Nachmittag", avgSignups: 3.8, avgAttended: 3.2, sessions: 8, trend: "down" },
   ]
@@ -185,7 +185,7 @@ export default function AdminPage() {
     <div style={S.container}>
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ ...S.h2, marginBottom: 4 }}>Host-Insights</h1>
-        <p style={{ color: T.textMuted }}>Detaillierte Einblicke fuer Session-Hosts</p>
+        <p style={{ color: T.textMuted }}>Detaillierte Einblicke für Session-Hosts</p>
       </div>
 
       {/* Feature-Sichtbarkeit (Sidebar-Steuerung) */}

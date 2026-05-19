@@ -25,35 +25,81 @@ import UnfinishedCheckoutModal from './modals/UnfinishedCheckoutModal'
 
 const SIDEBAR_KEY = 'cw-sidebar-collapsed'
 
-// Eigene Loading-Screen-Komponente. Zeigt nach 4 Sek einen Reset-Button,
-// falls die Auth-Initialisierung haengen bleibt (z.B. kaputter JWT im
-// localStorage). Damit ist der Nutzer nie ohne Eskalation gefangen.
+// Bug-Fix 2 + 3: Loading-Screen.
+// - Reset-Button ist IMMER sichtbar, sobald der Loading-Screen erscheint
+//   (frueher: erst nach 4s). Wenn jemand mit einem kaputten Token einloggt,
+//   soll er nicht erst 4s warten muessen bevor er die Eskalation findet.
+// - Fallback-Text ist informativer und wechselt nach Zeit Stufen,
+//   damit der Nutzer sieht "OK, das laeuft" und spaeter "OK, das dauert
+//   ungewoehnlich lange, ich darf abbrechen".
 function LoadingScreen() {
   const { resetLocalSession } = useAuth()
-  const [showReset, setShowReset] = useState(false)
+  const [stage, setStage] = useState(0) // 0 = normal, 1 = "dauert laenger", 2 = "definitiv haengt"
 
   useEffect(() => {
-    const t = setTimeout(() => setShowReset(true), 4000)
-    return () => clearTimeout(t)
+    const t1 = setTimeout(() => setStage(1), 2500)
+    const t2 = setTimeout(() => setStage(2), 6000)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+    }
   }, [])
 
+  const stageText = stage === 0
+    ? 'Deine Sitzung wird geladen…'
+    : stage === 1
+      ? 'Das dauert etwas länger als üblich…'
+      : 'Hmm, da hängt etwas. Versuch bitte den Reset.'
+
   return (
-    <div className="min-h-screen bg-bg flex flex-col items-center justify-center gap-6 px-6">
-      <div className="text-accent text-xl font-semibold">Laden...</div>
-      {showReset && (
-        <div className="flex flex-col items-center gap-3 text-center max-w-sm">
-          <p className="text-text-muted text-sm">
-            Dauert es zu lange? Manchmal hilft es, die lokale Sitzung
-            zurückzusetzen und sich neu anzumelden.
-          </p>
-          <button
-            onClick={resetLocalSession}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-accent text-white hover:opacity-90 transition-opacity"
-          >
-            Sitzung zurücksetzen & neu laden
-          </button>
-        </div>
-      )}
+    <div
+      className="min-h-screen bg-bg flex flex-col items-center justify-center gap-6 px-6"
+      role="status"
+      aria-live="polite"
+    >
+      {/* Animierter Spinner - signalisiert "App arbeitet" */}
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: '50%',
+          border: `3px solid ${T.border}`,
+          borderTopColor: T.accent,
+          animation: 'cw-spin 0.9s linear infinite',
+        }}
+      />
+      <style>{`@keyframes cw-spin { to { transform: rotate(360deg); } }`}</style>
+
+      <div className="text-accent text-xl font-semibold">{stageText}</div>
+
+      <p className="text-text-muted text-sm text-center max-w-sm" style={{ color: T.textMuted, fontSize: 13, lineHeight: 1.6 }}>
+        Wir prüfen deine Anmeldung und holen dein Profil. Das dauert normalerweise nur einen Moment.
+      </p>
+
+      {/* Reset-Button ist IMMER sichtbar (Bug-Fix 2). Bei Stage >=1 visuell
+          prominenter, damit es offensichtlicher wird, dass das eine Option ist. */}
+      <div className="flex flex-col items-center gap-3 text-center max-w-sm" style={{ marginTop: 8 }}>
+        <p style={{ color: T.textMuted, fontSize: 12 }}>
+          Sitzung hängt? Lokale Daten zurücksetzen und neu laden.
+        </p>
+        <button
+          onClick={resetLocalSession}
+          style={{
+            padding: '8px 16px',
+            borderRadius: 8,
+            border: `1px solid ${T.border}`,
+            background: stage >= 1 ? T.accent : 'transparent',
+            color: stage >= 1 ? '#fff' : T.textMuted,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+          aria-label="Lokale Sitzung zurücksetzen und Seite neu laden"
+        >
+          Sitzung zurücksetzen & neu laden
+        </button>
+      </div>
     </div>
   )
 }

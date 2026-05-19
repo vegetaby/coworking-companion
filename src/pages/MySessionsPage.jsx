@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { T, S } from '../lib/theme'
-import { formatDate } from '../lib/utils'
+import { formatDate, isSessionLive } from '../lib/utils'
 import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
 
@@ -74,7 +74,7 @@ export default function MySessionsPage() {
             </div>
           ) : (
             upcoming.map(s => {
-              const isLive = s.status === 'live'
+              const isLive = isSessionLive(s)
               return (
                 <div key={s.id} style={{ ...S.card, padding: 18, ...(isLive ? { border: `1px solid ${T.danger}30` } : {}) }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 12 }}>

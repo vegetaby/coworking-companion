@@ -91,7 +91,7 @@ export default function RoutinesPage() {
             <Icon name="info" size={18} />
           </div>
           <div style={{ flex: 1, fontSize: 14, color: T.text }}>
-            <strong>So funktionieren Routinen</strong> — lege deine persoenliche Pre-Session-Checkliste an. Beim Check-In zu einer Session kannst du jede aktive Routine abhaken und siehst spaeter, welche Gewohnheiten dich am produktivsten machen.
+            <strong>So funktionieren Routinen</strong> — lege deine persönliche Pre-Session-Checkliste an. Beim Check-In zu einer Session kannst du jede aktive Routine abhaken und siehst später, welche Gewohnheiten dich am produktivsten machen.
           </div>
           <button
             onClick={() => setTutorialDismissed(true)}
@@ -111,7 +111,7 @@ export default function RoutinesPage() {
       )}
 
       <p style={{ color: T.textMuted, marginBottom: 24, maxWidth: 500 }}>
-        Deine persoenliche Pre-Session-Checkliste. Aktive Routinen erscheinen bei jedem Check-In.
+        Deine persönliche Pre-Session-Checkliste. Aktive Routinen erscheinen bei jedem Check-In.
       </p>
 
       {error && (

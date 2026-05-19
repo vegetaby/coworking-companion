@@ -1,6 +1,6 @@
 const Icon = ({ name, size = 20 }) => {
   const icons = {
-    flame: <><path d="M12 2.5C12 6 9.5 7.5 8.5 10.5C7.5 13.5 8.5 16 10 17.5C8 16 7 13.5 8 11C8.5 9.5 10 8 10.5 6.5C11 5 12 2.5 12 2.5Z" fill="currentColor" opacity="0.6"/><path d="M12 2.5C12 6.5 15 8 15 12C15 15.5 12.5 18 10 18.5C11.5 18 14 16.5 14 13C14 10.5 12 8.5 12 6C12 4.5 12 2.5 12 2.5Z" fill="currentColor"/><path d="M11.5 10C11.5 10 13 12 13 14C13 16 11.5 17 10.5 17C11.5 16.5 12 15.5 12 14.5C12 13 11.5 10 11.5 10Z" fill="currentColor" opacity="0.8"/></>,
+    flame: <path d="M8.5 14.5A2.5 2.5 0 0 0 11 17c1.5 0 3-1.2 3-3 0-2-1-3-2-4 0 .8-.4 1.5-1 2-1.5-1.5-2-3-2-5C5 9 4 11 4 13c0 3 2.5 5.5 5.5 5.5 1.4 0 2.5-.5 3.5-1.5-.5-.8-1.5-1.5-2.5-1.5-.7 0-1.5.3-2 1z" fill="currentColor"/>,
     calendar: <><rect x="3" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" strokeWidth="2"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="2"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="2"/><line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/></>,
     users: <><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" fill="none" stroke="currentColor" strokeWidth="2"/><circle cx="9" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="2"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" fill="none" stroke="currentColor" strokeWidth="2"/></>,
     check: <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>,

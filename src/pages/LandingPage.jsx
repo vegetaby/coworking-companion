@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { T, S } from '../lib/theme'
-import { formatDate } from '../lib/utils'
+import { formatDate, getSessionLiveStatus, isSessionPast } from '../lib/utils'
 import { MOCK_SESSIONS } from '../data/mockData'
 import Icon from '../components/ui/Icon'
 import Stars from '../components/ui/Stars'
@@ -105,11 +105,11 @@ export default function LandingPage() {
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <h2 style={{ fontSize: 32, fontWeight: 800, textAlign: 'center', marginBottom: 48 }}>Nächste Fokus Sessions</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-            {MOCK_SESSIONS.filter(s => s.status !== "past").slice(0, 4).map(session => (
+            {MOCK_SESSIONS.filter(s => !isSessionPast(s)).slice(0, 4).map(session => (
               <div key={session.id} style={{ ...S.card, cursor: "pointer", transition: 'transform 0.2s' }} onClick={openLogin}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
                   <span style={S.badge(session.host === "Britta" ? "#8b5cf6" : "#3b82f6")}>{session.host}</span>
-                  {session.status === "live" && (
+                  {getSessionLiveStatus(session) === "live" && (
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, ...S.badge(T.danger) }}>
                       <div style={{ width: 6, height: 6, borderRadius: "50%", background: T.danger }} /> LIVE
                     </span>

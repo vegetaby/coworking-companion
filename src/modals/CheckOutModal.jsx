@@ -153,7 +153,7 @@ export default function CheckOutModal() {
               <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>Lade Teilnehmer…</p>
             ) : signups.length === 0 ? (
               <p style={{ fontSize: 13, color: T.textMuted, margin: 0 }}>
-                Keine Anmeldungen fuer diese Session.
+                Keine Anmeldungen für diese Session.
               </p>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

@@ -67,7 +67,7 @@ export default function LeaderboardPage() {
             <Tooltip text="Wochen in Folge mit mind. 1 Session"><span style={{ cursor: "help" }}><Icon name="info" size={13} /></span></Tooltip>
           </span>
           <span>
-            <Tooltip text="Veraenderung gegenueber dem Vorzeitraum"><span style={{ cursor: "help" }}>Trend</span></Tooltip>
+            <Tooltip text="Veränderung gegenüber dem Vorzeitraum"><span style={{ cursor: "help" }}>Trend</span></Tooltip>
           </span>
         </div>
         {data.map((m, i) => (

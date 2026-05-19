@@ -14,7 +14,7 @@ export default function GoalModal() {
           <h3 style={S.h3}>Session-Ziel</h3>
           <button style={{ background: "none", border: "none", color: T.textMuted, cursor: "pointer" }} onClick={() => setShowGoalModal(null)}><Icon name="x" size={20} /></button>
         </div>
-        <textarea style={S.textarea} value={text} onChange={e => setText(e.target.value)} placeholder="Was moechtest du schaffen?" />
+        <textarea style={S.textarea} value={text} onChange={e => setText(e.target.value)} placeholder="Was möchtest du schaffen?" />
         <div style={{ display: "flex", gap: 8, marginTop: 16, justifyContent: "flex-end" }}>
           <button style={S.btn("outline")} onClick={() => setShowGoalModal(null)}>Abbrechen</button>
           <button style={S.btn("primary")} onClick={() => { setGoals(g => ({...g, [showGoalModal]: text})); setShowGoalModal(null) }}>Speichern</button>

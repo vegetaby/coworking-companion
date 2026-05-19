@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { T, S } from '../lib/theme'
-import { formatDateLong } from '../lib/utils'
+import { formatDateLong, isSessionLive, isSessionPast } from '../lib/utils'
 import Icon from '../components/ui/Icon'
 
 const trimTime = (t) => (typeof t === 'string' ? t.slice(0, 5) : t)
@@ -39,9 +39,12 @@ export default function CalendarPage() {
   const [monthOffset, setMonthOffset] = useState(0)
 
   // Sessions nach Datum gruppiert (sortiert nach Datum + Startzeit)
+  // Bug-Fix 7: Vergangene Sessions raus aus der Liste. Vorher zeigte die
+  // Kalender-Listen-View Sessions aus dem letzten Monat noch als "kommend".
   const grouped = useMemo(() => {
+    const upcomingOnly = realSessions.filter(s => !isSessionPast(s))
     const g = {}
-    const sorted = [...realSessions].sort(
+    const sorted = [...upcomingOnly].sort(
       (a, b) => (a.date + a.start_time).localeCompare(b.date + b.start_time)
     )
     sorted.forEach(s => {
@@ -85,7 +88,7 @@ export default function CalendarPage() {
   for (let d = 1; d <= monthData.daysInMonth; d++) monthDays.push(d)
 
   const SessionCard = ({ session }) => {
-    const isLive = session.status === 'live'
+    const isLive = isSessionLive(session)
     const isSignedUp = realSignedUp.has(session.id)
     return (
       <div style={{
@@ -120,7 +123,7 @@ export default function CalendarPage() {
             </button>
           )}
           {user && isSignedUp && (
-            <a href={buildGoogleCalLink(session)} target="_blank" rel="noopener noreferrer" title="In Google Calendar uebernehmen" style={{
+            <a href={buildGoogleCalLink(session)} target="_blank" rel="noopener noreferrer" title="In Google Calendar übernehmen" style={{
               ...S.btn('outline'), padding: '10px', borderColor: 'rgba(66,133,244,0.3)',
               background: 'rgba(66,133,244,0.06)', textDecoration: 'none',
             }}>
@@ -187,7 +190,7 @@ export default function CalendarPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setWeekOffset(w => w - 1)}><Icon name="chevronLeft" size={16} /> Vorherige</button>
             <span style={{ fontWeight: 700, fontSize: 16, color: T.accentLight }}>{weekLabel}</span>
-            <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setWeekOffset(w => w + 1)}>Naechste <Icon name="chevronRight" size={16} /></button>
+            <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setWeekOffset(w => w + 1)}>Nächste <Icon name="chevronRight" size={16} /></button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
             {weekDays.map(day => {
@@ -209,7 +212,7 @@ export default function CalendarPage() {
                   {daySessions.length === 0 ? (
                     <div style={{ fontSize: 11, color: T.textMuted, textAlign: 'center', marginTop: 16 }}>—</div>
                   ) : daySessions.map(s => {
-                    const isLive = s.status === 'live'
+                    const isLive = isSessionLive(s)
                     const isSigned = realSignedUp.has(s.id)
                     return (
                       <div key={s.id} style={{
@@ -247,7 +250,7 @@ export default function CalendarPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setMonthOffset(m => m - 1)}><Icon name="chevronLeft" size={16} /> Vorheriger</button>
             <span style={{ fontWeight: 700, fontSize: 18, color: T.accentLight }}>{monthData.monthName} {monthData.year}</span>
-            <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setMonthOffset(m => m + 1)}>Naechster <Icon name="chevronRight" size={16} /></button>
+            <button style={{ ...S.btn('outline'), padding: '8px 14px' }} onClick={() => setMonthOffset(m => m + 1)}>Nächster <Icon name="chevronRight" size={16} /></button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
             {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => (
@@ -261,7 +264,7 @@ export default function CalendarPage() {
               const daySessions = realSessions.filter(s => s.date === dateStr)
               const isToday = dateStr === new Date().toISOString().split('T')[0]
               const hasSignedUp = daySessions.some(s => realSignedUp.has(s.id))
-              const hasLive = daySessions.some(s => s.status === 'live')
+              const hasLive = daySessions.some(s => isSessionLive(s))
               return (
                 <div key={dateStr} style={{
                   background: isToday ? T.accentGlow : T.card, borderRadius: 10, padding: '8px 6px',
@@ -271,7 +274,7 @@ export default function CalendarPage() {
                   <div style={{ fontSize: 14, fontWeight: isToday ? 800 : 600, color: isToday ? T.accentLight : T.text, textAlign: 'center', marginBottom: 4 }}>{day}</div>
                   {daySessions.map(s => {
                     const isSigned = realSignedUp.has(s.id)
-                    const isLive = s.status === 'live'
+                    const isLive = isSessionLive(s)
                     return (
                       <div key={s.id} style={{
                         padding: '2px 4px', borderRadius: 6, marginBottom: 3,

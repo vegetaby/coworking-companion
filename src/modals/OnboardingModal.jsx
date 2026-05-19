@@ -19,9 +19,9 @@ export default function OnboardingModal() {
 
         {[
           { icon: "calendar", title: "1. Sessions auswaehlen", desc: "Geh zum Kalender und klick 'Ich bin dabei' bei den Sessions, die passen." },
-          { icon: "clipboard", title: "2. Fokus-Routinen einrichten", desc: "Erstelle deine persoenliche Pre-Session-Checkliste unter 'Fokus-Routinen'." },
+          { icon: "clipboard", title: "2. Fokus-Routinen einrichten", desc: "Erstelle deine persönliche Pre-Session-Checkliste unter 'Fokus-Routinen'." },
           { icon: "zap", title: "3. Check-In & Check-Out", desc: "Bei laufenden Sessions erscheint ein Quick Check-In – setz dein Ziel in 1 Minute." },
-          { icon: "pieChart", title: "4. Analyse nutzen", desc: "Verfolge deine Produktivitaet, Slot-Praeferenzen und Routine-Impact." },
+          { icon: "pieChart", title: "4. Analyse nutzen", desc: "Verfolge deine Produktivität, Slot-Präferenzen und Routine-Impact." },
         ].map((step, i) => (
           <div key={i} style={{ display: "flex", gap: 14, marginBottom: 16, alignItems: "start" }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: T.accentGlow, display: "flex", alignItems: "center", justifyContent: "center", color: T.accentLight, flexShrink: 0 }}>

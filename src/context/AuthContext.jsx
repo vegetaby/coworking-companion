@@ -3,17 +3,53 @@ import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
 
+// Bug-Fix 4: Profile-Loading mit Retry + exponentiellem Backoff.
+// Netzwerk-Hick-Ups (z. B. Mobile, schlechtes WLAN) sollen nicht dazu fuehren,
+// dass das Dashboard ohne Profil bleibt. Wir versuchen es bis zu 3x,
+// loggen jeden Fehler, und geben am Ende kontrolliert auf.
+const PROFILE_FETCH_MAX_ATTEMPTS = 3
+const PROFILE_FETCH_BASE_DELAY_MS = 400
+
+const fetchProfileWithRetry = async (userId) => {
+  let lastError = null
+  for (let attempt = 1; attempt <= PROFILE_FETCH_MAX_ATTEMPTS; attempt++) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      if (error) {
+        lastError = error
+        // PGRST116 = "no rows" -> Profil existiert (noch) nicht.
+        // Kein Retry, einfach null zurueck.
+        if (error.code === 'PGRST116') return { data: null, error: null }
+        throw error
+      }
+      return { data, error: null }
+    } catch (err) {
+      lastError = err
+      console.warn(
+        `[Auth] fetchProfile attempt ${attempt}/${PROFILE_FETCH_MAX_ATTEMPTS} failed:`,
+        err?.message || err
+      )
+      if (attempt < PROFILE_FETCH_MAX_ATTEMPTS) {
+        const delay = PROFILE_FETCH_BASE_DELAY_MS * Math.pow(2, attempt - 1)
+        await new Promise((resolve) => setTimeout(resolve, delay))
+      }
+    }
+  }
+  console.error('[Auth] fetchProfile gave up after retries', lastError)
+  return { data: null, error: lastError }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = async (userId) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    const { data } = await fetchProfileWithRetry(userId)
     setProfile(data)
   }
 
@@ -106,10 +142,55 @@ export function AuthProvider({ children }) {
     return { data, error }
   }
 
+  // Bug-Fix 1: signOut-Robustness.
+  // - Best Effort: erst server-side signOut probieren, dann lokale Bereinigung.
+  // - Falls supabase.auth.signOut() haengt oder einen Fehler wirft (z.B. abgelaufenes JWT,
+  //   Netzwerk-Issue), bleibt der User trotzdem in einem konsistenten "ausgeloggt"-Zustand,
+  //   weil wir den lokalen State immer cleanen.
+  // - Falls ALLES schiefgeht (z.B. Storage nicht verfuegbar), fallen wir auf
+  //   einen harten Page-Reload zurueck, damit der User nie "halb-eingeloggt" festhaengt.
   const signOut = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    setProfile(null)
+    let serverSignOutOk = false
+    try {
+      // 8s Timeout - sonst hat ein haengender signOut() den User ewig blockiert.
+      const signOutPromise = supabase.auth.signOut({ scope: 'global' })
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('signOut timeout')), 8000)
+      )
+      const { error } = await Promise.race([signOutPromise, timeoutPromise])
+      if (error) {
+        console.warn('[Auth] signOut returned error:', error.message)
+      } else {
+        serverSignOutOk = true
+      }
+    } catch (err) {
+      console.warn('[Auth] signOut threw, falling back to local cleanup:', err?.message || err)
+    }
+
+    // Lokalen State IMMER cleanen, egal was passiert ist
+    try {
+      setUser(null)
+      setProfile(null)
+    } catch {
+      // ignore - im worst case macht der Reload das
+    }
+
+    // Wenn server-Signout fehlgeschlagen ist: lokalen Storage auch leeren,
+    // damit die App beim naechsten Laden keinen kaputten JWT findet.
+    if (!serverSignOutOk) {
+      try {
+        window.localStorage.removeItem('sb-' + (import.meta.env.VITE_SUPABASE_PROJECT_REF || '') + '-auth-token')
+      } catch {
+        // ignore
+      }
+      // Letzte Eskalation - kompletter Reset.
+      // Wird nur erreicht wenn Server-Call fehlgeschlagen ist.
+      try {
+        await resetLocalSession()
+      } catch {
+        window.location.replace('/')
+      }
+    }
   }
 
   const value = {

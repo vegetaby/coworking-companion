@@ -1,24 +1,41 @@
-// Echte Session-Daten aus Skool-Kalender (Maerz 2026)
+// Echte Session-Daten aus Skool-Kalender (urspruenglich Maerz 2026).
+// Damit der Demo-Modus immer "kommende Sessions" zeigt, werden die Daten
+// dynamisch relativ zu HEUTE generiert. So sehen Tester, die die App in
+// April, Mai, Juni ... oeffnen, immer realistisch nahe Sessions statt
+// "alle Sessions waren vor 2 Monaten".
+const _todayIso = () => {
+  const d = new Date()
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0, 10)
+}
+const _addDays = (isoDate, days) => {
+  const d = new Date(isoDate + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+const _t = _todayIso()
+
+// Die 19 Sessions liegen 0..22 Tage in der Zukunft (eine bewusst HEUTE,
+// damit der LIVE-Badge im Demo sichtbar wird falls die Zeit gerade passt).
 export const MOCK_SESSIONS = [
-  { id: "s1",  title: "1h Focus Session", date: "2026-03-04", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "past", zoom: "https://zoom.us/j/coworking", attendees: 5 },
-  { id: "s2",  title: "2h Focus Session", date: "2026-03-04", startTime: "10:00", endTime: "12:00", host: "Britta", status: "live", zoom: "https://zoom.us/j/coworking", attendees: 7 },
-  { id: "s3",  title: "2h Focus Session", date: "2026-03-05", startTime: "14:00", endTime: "16:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 4 },
-  { id: "s4",  title: "1h Focus Session", date: "2026-03-06", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 3 },
-  { id: "s5",  title: "2h Focus Session", date: "2026-03-10", startTime: "10:00", endTime: "12:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s6",  title: "1h Focus Session", date: "2026-03-11", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s7",  title: "2h Focus Session", date: "2026-03-11", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s8",  title: "2h Focus Session", date: "2026-03-12", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s9",  title: "2h Focus Session", date: "2026-03-12", startTime: "14:30", endTime: "16:30", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s10", title: "1h Focus Session", date: "2026-03-13", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s11", title: "2h Focus Session", date: "2026-03-17", startTime: "10:00", endTime: "12:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s12", title: "1h Focus Session", date: "2026-03-18", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s13", title: "2h Focus Session", date: "2026-03-18", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s14", title: "2h Focus Session", date: "2026-03-19", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s15", title: "2h Focus Session", date: "2026-03-19", startTime: "14:30", endTime: "16:30", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s16", title: "1h Focus Session", date: "2026-03-20", startTime: "06:00", endTime: "07:00", host: "Marcel", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s17", title: "2h Focus Session", date: "2026-03-25", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s18", title: "2h Focus Session", date: "2026-03-26", startTime: "10:00", endTime: "12:00", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
-  { id: "s19", title: "2h Focus Session", date: "2026-03-26", startTime: "14:30", endTime: "16:30", host: "Britta", status: "scheduled", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s1",  title: "1h Focus Session", date: _t,                  startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 5 },
+  { id: "s2",  title: "2h Focus Session", date: _t,                  startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 7 },
+  { id: "s3",  title: "2h Focus Session", date: _addDays(_t, 1),     startTime: "14:00", endTime: "16:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 4 },
+  { id: "s4",  title: "1h Focus Session", date: _addDays(_t, 2),     startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 3 },
+  { id: "s5",  title: "2h Focus Session", date: _addDays(_t, 6),     startTime: "10:00", endTime: "12:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s6",  title: "1h Focus Session", date: _addDays(_t, 7),     startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s7",  title: "2h Focus Session", date: _addDays(_t, 7),     startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s8",  title: "2h Focus Session", date: _addDays(_t, 8),     startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s9",  title: "2h Focus Session", date: _addDays(_t, 8),     startTime: "14:30", endTime: "16:30", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s10", title: "1h Focus Session", date: _addDays(_t, 9),     startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s11", title: "2h Focus Session", date: _addDays(_t, 13),    startTime: "10:00", endTime: "12:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s12", title: "1h Focus Session", date: _addDays(_t, 14),    startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s13", title: "2h Focus Session", date: _addDays(_t, 14),    startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s14", title: "2h Focus Session", date: _addDays(_t, 15),    startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s15", title: "2h Focus Session", date: _addDays(_t, 15),    startTime: "14:30", endTime: "16:30", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s16", title: "1h Focus Session", date: _addDays(_t, 16),    startTime: "06:00", endTime: "07:00", host: "Marcel", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s17", title: "2h Focus Session", date: _addDays(_t, 21),    startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s18", title: "2h Focus Session", date: _addDays(_t, 22),    startTime: "10:00", endTime: "12:00", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
+  { id: "s19", title: "2h Focus Session", date: _addDays(_t, 22),    startTime: "14:30", endTime: "16:30", host: "Britta", zoom: "https://zoom.us/j/coworking", attendees: 0 },
 ];
 
 export const MOCK_USER = { id: "u1", name: "Marcel Koerner", email: "marcel@example.com", avatar: null, role: "admin", streak: 12, totalSessions: 52, avgRating: 4.2, memberSince: "2025-09-15" };
@@ -38,7 +55,7 @@ export const MOCK_ATTENDANCE_HISTORY = [
     routineStates: { "Handy auf Flugmodus": false, "3 Tagesaufgaben notiert": true, "Stoerende Tabs geschlossen": true, "Pomodoro-Timer gestartet": false } },
   { sessionId: "prev7", title: "1h Focus Session", host: "Britta", date: "2026-02-17", startTime: "06:00", goalBefore: "Newsletter schreiben", goalAfter: "Fertig + verschickt!", rating: 5,
     routineStates: { "Handy auf Flugmodus": true, "3 Tagesaufgaben notiert": true, "Stoerende Tabs geschlossen": true } },
-  { sessionId: "prev8", title: "2h Focus Session", host: "Marcel", date: "2026-02-13", startTime: "10:00", goalBefore: "Pitch Deck ueberarbeiten", goalAfter: "80% fertig", rating: 4,
+  { sessionId: "prev8", title: "2h Focus Session", host: "Marcel", date: "2026-02-13", startTime: "10:00", goalBefore: "Pitch Deck überarbeiten", goalAfter: "80% fertig", rating: 4,
     routineStates: { "Handy auf Flugmodus": true, "3 Tagesaufgaben notiert": true, "Stoerende Tabs geschlossen": false } },
   { sessionId: "prev9", title: "2h Focus Session", host: "Marcel", date: "2026-03-11", startTime: "10:00", goalBefore: "Marketing-Strategie", goalAfter: "Grundkonzept steht", rating: 4,
     routineStates: { "Handy auf Flugmodus": true, "Wasser bereitstellen": true, "3 Tagesaufgaben notiert": true, "Pomodoro-Timer gestartet": true } },
