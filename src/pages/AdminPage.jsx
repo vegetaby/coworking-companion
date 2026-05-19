@@ -301,12 +301,12 @@ export default function AdminPage() {
         <div style={S.card}>
           <h3 style={S.h3}>Anmeldungen vs. Teilnahmen</h3>
           {sessionAttendance.slice(0, 6).map((a, i) => {
-            const showRate = ((a.attended / a.signedUp) * 100).toFixed(0)
+            const showRate = a.signedUp > 0 ? ((a.attended / a.signedUp) * 100).toFixed(0) : '–'
             return (
               <div key={i} style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{a.title} – {a.host} · {formatDate(a.date)}</span>
-                  <span style={{ fontSize: 12, color: a.noShows.length > 0 ? T.danger : T.success, fontWeight: 600 }}>{a.attended}/{a.signedUp} ({showRate}%)</span>
+                  <span style={{ fontSize: 12, color: a.noShows.length > 0 ? T.danger : T.success, fontWeight: 600 }}>{a.attended}/{a.signedUp} {a.signedUp > 0 ? `(${showRate}%)` : ''}</span>
                 </div>
                 <div style={{ display: "flex", gap: 4, height: 8, borderRadius: 4, overflow: "hidden", background: T.border }}>
                   <div style={{ width: `${(a.attended/a.signedUp)*100}%`, background: T.success, borderRadius: "4px 0 0 4px" }} />
@@ -386,7 +386,7 @@ export default function AdminPage() {
             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i < noShowMembers.length-1 ? `1px solid ${T.border}` : "none" }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: 14 }}>{m.name}</div>
-                <div style={{ fontSize: 12, color: T.textMuted }}>{m.totalSessions} Sessions · Zuletzt: {formatDate(m.lastNoShow)}</div>
+                <div style={{ fontSize: 12, color: T.textMuted }}>{m.totalSessions} Sessions · Zuletzt: {m.lastNoShow ? formatDate(m.lastNoShow) : 'Noch nie'}</div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontWeight: 800, fontSize: 16, color: parseInt(m.rate) > 30 ? T.danger : T.warning }}>{m.noShows}x</div>
@@ -406,7 +406,7 @@ export default function AdminPage() {
             <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: i < 3 ? `1px solid ${T.border}` : "none" }}>
               <div>
                 <div style={{ fontWeight: 500 }}>{d.name}</div>
-                <div style={{ fontSize: 12, color: T.danger }}>Zuletzt: {formatDate(d.lastSeen)} · {d.sessions} Sessions</div>
+                <div style={{ fontSize: 12, color: T.danger }}>Zuletzt: {d.lastSeen ? formatDate(d.lastSeen) : 'Noch nie aktiv'} · {d.sessions} Sessions</div>
               </div>
               <button style={{ ...S.btn("sm"), background: "transparent", border: `1px solid ${T.border}`, color: T.textMuted }}>Anschreiben</button>
             </div>
