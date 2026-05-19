@@ -68,13 +68,21 @@ export function AuthProvider({ children }) {
   const fetchProfile = async (userId) => {
     const { data, isAuthError } = await fetchProfileWithRetry(userId)
     if (isAuthError) {
-      // Token tot/invalidiert (z. B. nach Logout-Reload mit altem localStorage,
-      // oder Session expired). Statt halb-eingeloggt zu rendern: clean logout.
-      console.warn('[Auth] fetchProfile got auth error, clearing session')
+      // Push 5.1 — Race-Fix:
+      // Nur setUser(null) / setProfile(null) reichte nicht, weil supabase-js
+      // im onAuthStateChange-Listener mit dem (noch im memory cached) Token
+      // den User nochmal restored hat. Wir machen jetzt einen harten Reload,
+      // genau wie resetLocalSession(). Das ist der einzige sichere Weg
+      // einen tot-cached State loszuwerden.
+      console.warn('[Auth] fetchProfile got auth error, performing hard reset')
       try { await supabase.auth.signOut({ scope: 'local' }) } catch {}
-      try { window.localStorage.clear() } catch {}
-      setUser(null)
-      setProfile(null)
+      try {
+        window.localStorage.clear()
+        window.sessionStorage.clear()
+      } catch {}
+      // Hard reload statt setState — vermeidet die Race-Condition mit
+      // onAuthStateChange das den User nochmal restoren wuerde.
+      window.location.replace('/')
       return
     }
     setProfile(data)
